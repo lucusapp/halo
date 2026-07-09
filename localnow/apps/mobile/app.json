@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "LocalNow",
+    "slug": "localnow",
+    "scheme": "localnow",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "plugins": ["expo-router", "expo-camera", "expo-notifications"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.localnow.app"
+    },
+    "android": {
+      "package": "com.localnow.app"
+    }
+  }
+}

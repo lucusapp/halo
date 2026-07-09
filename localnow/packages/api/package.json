@@ -5,12 +5,15 @@
   "scripts": {
     "prisma:validate": "prisma validate",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "check-types": "tsc --noEmit"
   },
   "devDependencies": {
-    "prisma": "^5.20.0"
+    "prisma": "^5.20.0",
+    "typescript": "5.9.2"
   },
   "dependencies": {
+    "@localnow/shared": "*",
     "@prisma/client": "^5.20.0"
   }
 }
