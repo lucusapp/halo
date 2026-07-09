@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "dist",
+    "rootDir": "src",
+    // Se compila a CommonJS aunque el tsconfig base use ESNext (pensado para el modo
+    // "bundler" de tsc en apps/web y apps/mobile): este dist/ lo consume packages/api
+    // vía require() de Node/Nest, y CJS interopera igual de bien con los bundlers.
+    // Mantener un único formato evita mantener un build dual ESM+CJS para un paquete
+    // interno que nunca se publica fuera del monorepo.
+    "module": "commonjs",
+    "moduleResolution": "node"
+  },
+  "exclude": ["node_modules", "dist"]
+}

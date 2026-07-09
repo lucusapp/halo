@@ -14,11 +14,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "baseUrl": "./",
-    "paths": {
-      "@localnow/shared": ["../shared/src"],
-      "@localnow/shared/*": ["../shared/src/*"]
-    }
+    "baseUrl": "./"
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
