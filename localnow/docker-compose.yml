@@ -1,0 +1,17 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: localnow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: localnow
+      POSTGRES_USER: localnow
+      POSTGRES_PASSWORD: localnow
+    ports:
+      # 5433 en el host: el 5432 ya lo ocupa el contenedor "cadabra-posgres" de otro proyecto.
+      - "5433:5432"
+    volumes:
+      - localnow_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  localnow_postgres_data:
