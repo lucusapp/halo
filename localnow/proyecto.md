@@ -621,7 +621,7 @@ Response: { valid: bool, type: 'coupon'|'reward', detail: {...} }
 | Informes de mercado | Tendencias de consumo local | 200-1.000€/informe |
 
 ### 15.2 Estrategia de lanzamiento
-- **Ciudad piloto**: una ciudad de 80.000-120.000 habitantes (p.ej. Pontevedra)
+- **Ciudad piloto**: una ciudad de 80.000-120.000 habitantes (p.ej. Lugo)
 - **Fase 1 (meses 1-3)**: 10-20 comercios piloto, acceso gratuito para validar el producto
 - **Fase 2 (meses 4-6)**: activar suscripciones de pago, campañas básicas
 - **Fase 3 (mes 7+)**: campañas cruzadas, informes de mercado, expansión a segunda ciudad
