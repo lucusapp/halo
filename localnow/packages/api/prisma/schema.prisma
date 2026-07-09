@@ -1,0 +1,684 @@
+// LocalNow — schema de base de datos
+// Traducción a Prisma del modelo conceptual descrito en PROYECTO.md §11.
+// Convenciones:
+//   - IDs: cuid()
+//   - Dinero: Decimal(10,2) — nunca Float, para evitar errores de redondeo
+//   - Auth delegada a Supabase/Clerk (PROYECTO.md §3): no guardamos contraseñas,
+//     solo el `authId` del proveedor externo.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ────────────────────────────────────────────────────────────────
+// Enums
+// ────────────────────────────────────────────────────────────────
+
+enum NewsCategory {
+  MUNICIPIO
+  DEPORTES
+  ECONOMIA
+  JUDICIAL
+  CULTURA
+  DIPUTACION
+  SOCIEDAD
+}
+
+enum CommerceCategory {
+  RESTAURACION
+  COMERCIO
+  SERVICIOS
+  OCIO
+  SALUD
+}
+
+enum SubscriptionPlan {
+  BASIC
+  PRO
+}
+
+enum SubscriptionStatus {
+  INACTIVE
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+enum ProductUnit {
+  UNIT
+  KG
+  L
+}
+
+enum ProductSource {
+  MANUAL
+  IMPORT
+  OPENFOODFACTS
+}
+
+enum PaymentMethod {
+  CARD
+  CASH
+  BIZUM
+  OTHER
+}
+
+// Ciclo de vida de una compra (PROYECTO.md §13.1)
+enum TransactionStatus {
+  PENDING // QR generado, esperando escaneo del cliente
+  CONFIRMED // cliente escaneó y se vinculó a su user_id
+  ANONYMOUS // nadie escaneó en 5 min: se guarda la venta sin vincular usuario
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED
+  TWO_FOR_ONE
+}
+
+enum CouponStatus {
+  DRAFT
+  PENDING
+  ACTIVE
+  EXPIRED
+}
+
+// Estado de un QR de un solo uso (cupón o recompensa) — PROYECTO.md §6.6
+enum RedemptionStatus {
+  PENDING
+  USED
+  EXPIRED
+}
+
+enum RewardType {
+  DISCOUNT_PCT
+  DISCOUNT_FIXED
+  FREE_PRODUCT
+  GIFT
+}
+
+enum CampaignType {
+  AUTO_SUGGESTED
+  MANUAL
+  CROSS_COMMERCE
+}
+
+enum IncentiveType {
+  DISCOUNT
+  POINTS
+  GIFT
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ENDED
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  MODERATOR
+}
+
+// ────────────────────────────────────────────────────────────────
+// Ciudades
+// ────────────────────────────────────────────────────────────────
+
+model City {
+  id                String  @id @default(cuid())
+  name              String
+  slug              String  @unique
+  active            Boolean @default(true)
+  // puntos globales LocalNow otorgados por cada € gastado (PROYECTO.md §6.2)
+  pointsRatioGlobal Decimal @default(1) @db.Decimal(10, 4)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users        User[]
+  commerces    Commerce[]
+  segments     Segment[]
+  campaigns    Campaign[]
+  newsSources  NewsSource[]
+  newsArticles NewsArticle[]
+
+  @@map("cities")
+}
+
+// ────────────────────────────────────────────────────────────────
+// Usuario / cliente (PROYECTO.md §10.1)
+// ────────────────────────────────────────────────────────────────
+
+model User {
+  id     String  @id @default(cuid())
+  // id del usuario en el proveedor de auth (Supabase/Clerk)
+  authId String  @unique
+  email  String  @unique
+  name   String?
+  phone  String?
+
+  avatarUrl String?
+
+  cityId String?
+  city   City?   @relation(fields: [cityId], references: [id])
+
+  // Consentimiento RGPD de uso de datos de compra para personalización (§8.1, §14)
+  consentDataUsage Boolean   @default(false)
+  consentDate      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pointsGlobal        UserPointsGlobal?
+  pointsCommerce      UserPointsCommerce[]
+  transactions        Transaction[]
+  couponRedemptions   CouponRedemption[]
+  rewardRedemptions   RewardRedemption[]
+  userSegments        UserSegment[]
+  campaignImpressions CampaignImpression[]
+
+  @@index([cityId])
+  @@map("users")
+}
+
+model UserPointsGlobal {
+  id String @id @default(cuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  balance       Int @default(0)
+  totalEarned   Int @default(0)
+  totalRedeemed Int @default(0)
+
+  updatedAt DateTime @updatedAt
+
+  @@map("user_points_global")
+}
+
+// ────────────────────────────────────────────────────────────────
+// Comercio (PROYECTO.md §5, §9, §10.2)
+// ────────────────────────────────────────────────────────────────
+
+model Commerce {
+  id     String @id @default(cuid())
+  authId String @unique
+  name   String
+  slug   String @unique
+
+  cityId String
+  city   City   @relation(fields: [cityId], references: [id])
+
+  category CommerceCategory
+
+  cif     String  @unique
+  address String
+  lat     Float?
+  lng     Float?
+  phone   String?
+  email   String  @unique
+  logoUrl String?
+
+  description String?
+  // horario semanal, formato libre: { "mon": "09:00-20:00", ... }
+  schedule    Json?
+
+  // Alta y verificación (§9.1): active = perfil publicado, verified = CIF/negocio validado
+  active   Boolean @default(false)
+  verified Boolean @default(false)
+
+  subscriptionStatus SubscriptionStatus @default(INACTIVE)
+  subscriptionPlan   SubscriptionPlan?
+  stripeCustomerId   String?            @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pointsConfig      CommercePointsConfig?
+  userPoints        UserPointsCommerce[]
+  products          Product[]
+  transactions      Transaction[]
+  coupons           Coupon[]
+  rewards           Reward[]
+  rewardRedemptions RewardRedemption[]
+  campaigns         Campaign[]
+
+  @@index([cityId])
+  @@index([category])
+  @@map("commerces")
+}
+
+model CommercePointsConfig {
+  id String @id @default(cuid())
+
+  commerceId String   @unique
+  commerce   Commerce @relation(fields: [commerceId], references: [id], onDelete: Cascade)
+
+  // puntos propios del comercio otorgados por cada € gastado (§6.4)
+  pointsRatio     Decimal @default(1) @db.Decimal(10, 4)
+  // puntos necesarios para desbloquear la siguiente recompensa (informativo)
+  rewardThreshold Int?
+
+  updatedAt DateTime @updatedAt
+
+  @@map("commerce_points_config")
+}
+
+model UserPointsCommerce {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  commerceId String
+  commerce   Commerce @relation(fields: [commerceId], references: [id], onDelete: Cascade)
+
+  balance       Int @default(0)
+  totalEarned   Int @default(0)
+  totalRedeemed Int @default(0)
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, commerceId])
+  @@map("user_points_commerce")
+}
+
+// ────────────────────────────────────────────────────────────────
+// Catálogo de productos (PROYECTO.md §7.4)
+// ────────────────────────────────────────────────────────────────
+
+model Product {
+  id String @id @default(cuid())
+
+  commerceId String
+  commerce   Commerce @relation(fields: [commerceId], references: [id], onDelete: Cascade)
+
+  // código de barras estándar (nullable: productos a granel no tienen EAN)
+  ean String?
+  // código propio del comercio para productos sin EAN (fruta, charcutería...)
+  plu String?
+
+  name     String
+  category String?
+  price    Decimal     @db.Decimal(10, 2)
+  unit     ProductUnit @default(UNIT)
+  imageUrl String?
+
+  active Boolean       @default(true)
+  source ProductSource @default(MANUAL)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactionItems TransactionItem[]
+
+  // NOTA sobre NULL en índices únicos compuestos (PostgreSQL):
+  // Postgres trata cada NULL como distinto de cualquier otro NULL, por lo que un
+  // UNIQUE INDEX estándar NO bloquea múltiples filas con el mismo commerceId y
+  // ean = NULL (ni con plu = NULL) — el chequeo de unicidad simplemente no aplica
+  // a esas filas. Este es justo el comportamiento deseado aquí: un producto a
+  // granel (ean = NULL, identificado por plu) no debe chocar con otro producto a
+  // granel del mismo comercio solo por compartir ean = NULL, y viceversa para
+  // productos con EAN pero sin PLU. Equivale en la práctica a un índice único
+  // parcial (`WHERE ean IS NOT NULL`), sin necesitar uno: Prisma no soporta
+  // índices únicos filtrados de forma nativa en el DSL (`schema.prisma`), así que
+  // un parcial real requeriría una migración SQL manual, sin ganancia funcional
+  // sobre el UNIQUE estándar — solo un índice marginalmente más pequeño.
+  @@unique([commerceId, ean])
+  @@unique([commerceId, plu])
+  @@index([commerceId])
+  @@index([ean])
+  @@map("products")
+}
+
+// ────────────────────────────────────────────────────────────────
+// Transacciones / ticket digital (PROYECTO.md §7, §13.1)
+// ────────────────────────────────────────────────────────────────
+
+model Transaction {
+  id String @id @default(cuid())
+
+  // nullable: puede quedar ANONYMOUS si el cliente no escanea el QR
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  commerceId String
+  commerce   Commerce @relation(fields: [commerceId], references: [id])
+
+  status TransactionStatus @default(PENDING)
+
+  timestamp     DateTime       @default(now())
+  totalAmount   Decimal        @db.Decimal(10, 2)
+  paymentMethod PaymentMethod?
+
+  pointsGlobalEarned   Int @default(0)
+  pointsCommerceEarned Int @default(0)
+
+  campaignId String?
+  campaign   Campaign? @relation(fields: [campaignId], references: [id])
+
+  ticketUrl String?
+
+  // token del QR dinámico generado en /panel/sale/new, de un solo uso
+  qrToken     String?   @unique
+  qrExpiresAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  items TransactionItem[]
+
+  @@index([userId])
+  @@index([commerceId])
+  @@index([timestamp])
+  @@index([campaignId])
+  @@map("transactions")
+}
+
+model TransactionItem {
+  id String @id @default(cuid())
+
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  // referencia al catálogo (nullable: el producto pudo borrarse tras la venta)
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+
+  ean         String?
+  plu         String?
+  productName String
+  quantity    Decimal @db.Decimal(10, 3)
+  unitPrice   Decimal @db.Decimal(10, 2)
+  lineTotal   Decimal @db.Decimal(10, 2)
+
+  @@index([transactionId])
+  @@map("transaction_items")
+}
+
+// ────────────────────────────────────────────────────────────────
+// Cupones (PROYECTO.md §5.3)
+// ────────────────────────────────────────────────────────────────
+
+model Coupon {
+  id String @id @default(cuid())
+
+  commerceId String
+  commerce   Commerce @relation(fields: [commerceId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  type        CouponType
+  value       Decimal    @db.Decimal(10, 2)
+
+  startDate DateTime
+  endDate   DateTime
+
+  maxRedemptions     Int
+  currentRedemptions Int @default(0)
+
+  status CouponStatus @default(DRAFT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  redemptions CouponRedemption[]
+
+  @@index([commerceId])
+  @@index([status])
+  @@map("coupons")
+}
+
+model CouponRedemption {
+  id String @id @default(cuid())
+
+  couponId String
+  coupon   Coupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  // UUID v4 / JWT firmado en servidor — nunca generado en el cliente (§6.6)
+  qrToken     String           @unique
+  qrExpiresAt DateTime
+  status      RedemptionStatus @default(PENDING)
+  redeemedAt  DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([couponId])
+  @@index([userId])
+  @@map("coupon_redemptions")
+}
+
+// ────────────────────────────────────────────────────────────────
+// Fidelización por puntos — recompensas (PROYECTO.md §6)
+// ────────────────────────────────────────────────────────────────
+
+model Reward {
+  id String @id @default(cuid())
+
+  // null = recompensa global LocalNow, no ligada a un comercio concreto
+  commerceId String?
+  commerce   Commerce? @relation(fields: [commerceId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  pointsCost  Int
+  valueEuros  Decimal? @db.Decimal(10, 2)
+  type        RewardType
+
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  redemptions RewardRedemption[]
+
+  @@index([commerceId])
+  @@map("rewards")
+}
+
+model RewardRedemption {
+  id String @id @default(cuid())
+
+  rewardId String
+  reward   Reward @relation(fields: [rewardId], references: [id])
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  commerceId String
+  commerce   Commerce @relation(fields: [commerceId], references: [id])
+
+  qrToken     String           @unique
+  qrExpiresAt DateTime
+  status      RedemptionStatus @default(PENDING)
+  redeemedAt  DateTime?
+
+  pointsDeducted Int
+
+  createdAt DateTime @default(now())
+
+  @@index([rewardId])
+  @@index([userId])
+  @@index([commerceId])
+  @@map("reward_redemptions")
+}
+
+// ────────────────────────────────────────────────────────────────
+// Motor de segmentación y campañas (PROYECTO.md §8)
+// ────────────────────────────────────────────────────────────────
+
+model Segment {
+  id String @id @default(cuid())
+
+  cityId String
+  city   City   @relation(fields: [cityId], references: [id])
+
+  name        String
+  description String?
+  // reglas de segmentación en JSON, evaluadas por el job de recomputo nocturno
+  rules       Json
+
+  userCount      Int       @default(0)
+  lastComputedAt DateTime?
+  active         Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+
+  userSegments UserSegment[]
+  campaigns    Campaign[]
+
+  @@index([cityId])
+  @@map("segments")
+}
+
+model UserSegment {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  segmentId String
+  segment   Segment @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+
+  assignedAt DateTime @default(now())
+  active     Boolean  @default(true)
+
+  @@unique([userId, segmentId])
+  @@index([segmentId])
+  @@map("user_segments")
+}
+
+model Campaign {
+  id String @id @default(cuid())
+
+  // comercio que paga/lanza la campaña
+  commerceId String
+  commerce   Commerce @relation(fields: [commerceId], references: [id])
+
+  cityId String
+  city   City   @relation(fields: [cityId], references: [id])
+
+  name String
+  type CampaignType
+
+  targetSegmentId String?
+  targetSegment   Segment? @relation(fields: [targetSegmentId], references: [id])
+
+  incentiveType  IncentiveType
+  incentiveValue Decimal       @db.Decimal(10, 2)
+
+  // mensaje push: SIEMPRE genérico, nunca revela el criterio de selección (§8.1, §17.6)
+  pushMessage String
+
+  startDate DateTime
+  endDate   DateTime
+
+  maxRedemptions     Int?
+  currentRedemptions Int      @default(0)
+  budgetEuros        Decimal? @db.Decimal(10, 2)
+
+  status        CampaignStatus @default(DRAFT)
+  suggestedByAi Boolean        @default(false)
+  approvedAt    DateTime?
+
+  createdAt DateTime @default(now())
+
+  impressions  CampaignImpression[]
+  transactions Transaction[]
+
+  @@index([commerceId])
+  @@index([cityId])
+  @@index([status])
+  @@index([targetSegmentId])
+  @@map("campaigns")
+}
+
+model CampaignImpression {
+  id String @id @default(cuid())
+
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  sentAt DateTime @default(now())
+  opened Boolean  @default(false)
+
+  @@index([campaignId])
+  @@index([userId])
+  @@map("campaign_impressions")
+}
+
+// ────────────────────────────────────────────────────────────────
+// Revista de noticias (PROYECTO.md §4)
+// ────────────────────────────────────────────────────────────────
+
+model NewsSource {
+  id String @id @default(cuid())
+
+  cityId String
+  city   City   @relation(fields: [cityId], references: [id])
+
+  name          String
+  url           String
+  feedUrl       String?
+  category      NewsCategory?
+  active        Boolean       @default(true)
+  lastFetchedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  articles NewsArticle[]
+
+  @@index([cityId])
+  @@map("news_sources")
+}
+
+model NewsArticle {
+  id String @id @default(cuid())
+
+  sourceId String
+  source   NewsSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  cityId String
+  city   City   @relation(fields: [cityId], references: [id])
+
+  title    String
+  summary  String?
+  url      String   @unique
+  imageUrl String?
+  category NewsCategory
+
+  publishedAt DateTime
+  fetchedAt   DateTime @default(now())
+  featured    Boolean  @default(false)
+
+  @@index([cityId, category])
+  @@index([publishedAt])
+  @@map("news_articles")
+}
+
+// ────────────────────────────────────────────────────────────────
+// Backoffice (PROYECTO.md §10.3)
+// ────────────────────────────────────────────────────────────────
+
+model AdminUser {
+  id     String  @id @default(cuid())
+  authId String  @unique
+  email  String  @unique
+  name   String?
+
+  role AdminRole @default(MODERATOR)
+
+  createdAt DateTime @default(now())
+
+  @@map("admin_users")
+}
