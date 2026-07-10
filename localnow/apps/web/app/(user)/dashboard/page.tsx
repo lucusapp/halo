@@ -1,6 +1,7 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { SignOutButton } from '@clerk/nextjs';
 import { redirect } from 'next/navigation';
+import { withBasePath } from '@/lib/base-path';
 
 // Página de prueba: el middleware ya exige sesión para /dashboard, pero se repite la
 // comprobación aquí porque es la forma recomendada por Clerk de acceder a los datos de
@@ -8,7 +9,7 @@ import { redirect } from 'next/navigation';
 export default async function DashboardPage() {
   const { userId, getToken } = await auth();
   if (!userId) {
-    redirect('/login');
+    redirect(withBasePath('/login'));
   }
 
   const user = await currentUser();
@@ -42,7 +43,7 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <SignOutButton>
+      <SignOutButton redirectUrl={withBasePath('/login')}>
         <button type="button" className="w-fit rounded bg-gray-900 px-4 py-2 text-sm text-white">
           Cerrar sesión
         </button>
