@@ -31,6 +31,7 @@ El **toque diferencial y el modelo de negocio principal** es el sistema de datos
 - **Next.js 14** con App Router
 - **TailwindCSS** para estilos
 - Diseño editorial tipo Flipboard con cuadrícula dinámica de tarjetas
+- **@clerk/nextjs ^6.39.5** para autenticación — fijado a esta versión (no `latest`/7.x): `@clerk/nextjs@7` exige Next.js 15+, incompatible con nuestro Next 14.2.35. Actualizar de major solo junto con la migración a Next 15.
 
 ### Frontend móvil
 - **React Native** con **Expo**
@@ -45,7 +46,7 @@ El **toque diferencial y el modelo de negocio principal** es el sistema de datos
 - **PostgreSQL** como base de datos principal
 
 ### Infraestructura y servicios
-- **Supabase** o **Clerk** para autenticación (dos roles: usuario/cliente y comercio)
+- **Clerk** para autenticación (decidido — ver versión exacta en Frontend web; dos roles: usuario/cliente y comercio)
 - **Firebase Cloud Messaging** o **Expo Push** para notificaciones push
 - **Redis** para caché de sesiones, rate limiting y colas de eventos
 - **AWS S3** o **Supabase Storage** para imágenes de productos y logos de comercios
@@ -636,7 +637,12 @@ localnow/
 │   ├── web/                    # Next.js 14 — web app
 │   │   ├── app/
 │   │   │   ├── (public)/       # Rutas públicas (noticias, directorio)
-│   │   │   ├── (auth)/         # Login, registro
+│   │   │   ├── (auth)/         # Login, registro — <SignIn>/<SignUp> de Clerk
+│   │   │   │   ├── login/[[...sign-in]]/     # catch-all opcional: Clerk navega a
+│   │   │   │   │                             # subrutas propias (verificación de
+│   │   │   │   │                             # email, MFA...); sin él, 404 en cuanto
+│   │   │   │   │                             # el flujo tiene más de un paso
+│   │   │   │   └── register/[[...sign-up]]/  # mismo motivo que login
 │   │   │   ├── (user)/         # Dashboard usuario autenticado
 │   │   │   └── (panel)/        # Panel de gestión del comercio
 │   │   └── components/
@@ -709,5 +715,14 @@ Cuando trabajes en este proyecto, ten siempre en cuenta:
 
 ---
 
+## 18. Decisiones técnicas en desarrollo
+
+Avisos y decisiones puntuales surgidas durante la implementación, pendientes de resolver o ya resueltas de una forma concreta que conviene no repetir.
+
+- **Colisión de rutas `(user)/dashboard` vs. `(panel)/dashboard`.** Los grupos de rutas de Next.js (`(user)`, `(panel)`) no aparecen en la URL, así que `apps/web/app/(user)/dashboard/page.tsx` y un futuro `apps/web/app/(panel)/dashboard/page.tsx` resolverían ambos a `/dashboard` — Next.js falla el build por rutas duplicadas. **Antes de construir la vista de panel de comercio**, renombrar `(panel)/dashboard` a `(panel)/panel` (o mover el segmento fuera del grupo a `panel/dashboard`) para que quede en `/panel`, distinto de `/dashboard` (usuario).
+
+---
+
 *Documento generado el 20/06/2026. Versión 1.0.*
+*Última actualización: 10/07/2026 — integración de Clerk en apps/web (§3, §16, §18).*
 *Actualizar este documento cada vez que se tome una decisión de producto o arquitectura relevante.*
