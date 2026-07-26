@@ -1,10 +1,11 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '../clerk-auth/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../clerk-auth/jwt-auth.guard';
+import type { ClerkJwtClaims } from '../clerk-auth/types';
+import { CreateCommerceDto } from '../commerce/dto/create-commerce.dto';
 import { AuthService } from './auth.service';
-import { CurrentUser } from './decorators/current-user.decorator';
-import { RegisterCommerceDto } from './dto/register-commerce.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import type { AuthCommerceResult, AuthIdentityResult, AuthUserResult, ClerkJwtClaims } from './types';
+import type { AuthCommerceResult, AuthIdentityResult, AuthUserResult } from './types';
 
 // Todos los endpoints exigen un JWT de Clerk ya emitido: el cliente se autentica
 // directamente contra Clerk con su propio SDK (signup/signin/OAuth) antes de llamar
@@ -26,7 +27,7 @@ export class AuthController {
   @Post('register/commerce')
   registerCommerce(
     @CurrentUser() claims: ClerkJwtClaims,
-    @Body() dto: RegisterCommerceDto,
+    @Body() dto: CreateCommerceDto,
   ): Promise<AuthCommerceResult> {
     return this.authService.registerCommerce(claims, dto);
   }

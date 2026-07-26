@@ -2,18 +2,19 @@ import { BadRequestException, ConflictException, Injectable, InternalServerError
 import {
   AdminUser as PrismaAdminUser,
   Commerce as PrismaCommerce,
-  CommerceCategory as PrismaCommerceCategory,
   Prisma,
   User as PrismaUser,
   UserPointsGlobal as PrismaUserPointsGlobal,
 } from '@prisma/client';
 import { AdminRole } from '@localnow/shared';
+import { ClerkService } from '../clerk-auth/clerk.service';
+import type { ClerkJwtClaims } from '../clerk-auth/types';
+import { CommerceService } from '../commerce/commerce.service';
+import type { CreateCommerceDto } from '../commerce/dto/create-commerce.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { mirrorEnum } from '../prisma/mirror-enum.util';
-import { ClerkService } from './clerk.service';
-import { RegisterCommerceDto } from './dto/register-commerce.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
-import type { AuthCommerceResult, AuthIdentityResult, AuthUserResult, ClerkJwtClaims } from './types';
+import type { AuthCommerceResult, AuthIdentityResult, AuthUserResult } from './types';
 
 type UserWithPoints = PrismaUser & { pointsGlobal: PrismaUserPointsGlobal | null };
 
@@ -22,6 +23,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly clerkService: ClerkService,
+    private readonly commerceService: CommerceService,
   ) {}
 
   async registerUser(claims: ClerkJwtClaims, dto: RegisterUserDto): Promise<AuthUserResult> {
@@ -59,45 +61,12 @@ export class AuthService {
     }
   }
 
-  async registerCommerce(claims: ClerkJwtClaims, dto: RegisterCommerceDto): Promise<AuthCommerceResult> {
-    const authId = claims.sub;
-
-    const existing = await this.prisma.commerce.findUnique({ where: { authId } });
-    if (existing) {
-      throw new ConflictException('Ya existe un comercio registrado con esta cuenta');
-    }
-
-    await this.assertCityExists(dto.cityId);
-
-    const slug = await this.generateUniqueCommerceSlug(dto.name);
-
-    try {
-      const commerce = await this.prisma.commerce.create({
-        data: {
-          authId,
-          name: dto.name,
-          slug,
-          cityId: dto.cityId,
-          category: mirrorEnum<PrismaCommerceCategory>(dto.category),
-          cif: dto.cif,
-          address: dto.address,
-          lat: dto.lat ?? null,
-          lng: dto.lng ?? null,
-          phone: dto.phone ?? null,
-          email: dto.email,
-          logoUrl: dto.logoUrl ?? null,
-          description: dto.description ?? null,
-          schedule: dto.schedule,
-          // El alta queda pendiente de revisión manual (§9.1) — nunca se activa/verifica
-          // en el registro, sin importar lo que llegue en el body.
-          active: false,
-          verified: false,
-        },
-      });
-      return this.toCommerceResult(commerce);
-    } catch (error) {
-      this.handleUniqueConstraintError(error, 'comercio');
-    }
+  // La creación real (slug, validación de ciudad, active/verified=false...) vive en
+  // CommerceService — es el mismo comercio que se gestiona luego desde POST /commerce,
+  // no tiene sentido duplicar esa lógica aquí.
+  async registerCommerce(claims: ClerkJwtClaims, dto: CreateCommerceDto): Promise<AuthCommerceResult> {
+    const commerce = await this.commerceService.create(claims.sub, dto);
+    return this.toCommerceResult(commerce);
   }
 
   // Cliente ya autenticado con Clerk que llama a nuestra API por primera vez: si no
@@ -170,26 +139,6 @@ export class AuthService {
     if (!city) {
       throw new BadRequestException(`La ciudad ${cityId} no existe`);
     }
-  }
-
-  private async generateUniqueCommerceSlug(name: string): Promise<string> {
-    const base = name
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 80);
-
-    const maxAttempts = 20;
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const candidate = attempt === 0 ? base : `${base}-${attempt + 1}`;
-      const collision = await this.prisma.commerce.findUnique({ where: { slug: candidate } });
-      if (!collision) {
-        return candidate;
-      }
-    }
-    throw new ConflictException('No se pudo generar un slug único para el comercio, inténtalo con otro nombre');
   }
 
   private handleUniqueConstraintError(error: unknown, entity: string): never {

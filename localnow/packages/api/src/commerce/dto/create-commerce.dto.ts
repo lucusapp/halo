@@ -14,7 +14,7 @@ import {
 // authId se toma del JWT ya verificado (JwtAuthGuard), nunca del body.
 // El alta queda pendiente de revisión manual (§9.1): el service fuerza
 // active=false y verified=false sin importar lo que llegue aquí.
-export class RegisterCommerceDto {
+export class CreateCommerceDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(150)

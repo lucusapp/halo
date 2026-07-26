@@ -4,7 +4,8 @@ import type { AuthenticatedRequest } from './types';
 
 // Protege cualquier ruta exigiendo un JWT de Clerk válido en el header Authorization.
 // No decide QUIÉN es el actor en nuestra BD (User/Commerce/AdminUser) — eso lo
-// resuelve AuthService a partir del `sub` verificado que este guard deja en request.auth.
+// resuelve cada AuthService/CommerceService a partir del `sub` verificado que este
+// guard deja en request.auth.
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   constructor(private readonly clerkService: ClerkService) {}
