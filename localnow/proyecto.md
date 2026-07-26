@@ -721,8 +721,14 @@ Avisos y decisiones puntuales surgidas durante la implementación, pendientes de
 
 - **Colisión de rutas `(user)/dashboard` vs. `(panel)/dashboard`.** Los grupos de rutas de Next.js (`(user)`, `(panel)`) no aparecen en la URL, así que `apps/web/app/(user)/dashboard/page.tsx` y un futuro `apps/web/app/(panel)/dashboard/page.tsx` resolverían ambos a `/dashboard` — Next.js falla el build por rutas duplicadas. **Antes de construir la vista de panel de comercio**, renombrar `(panel)/dashboard` a `(panel)/panel` (o mover el segmento fuera del grupo a `panel/dashboard`) para que quede en `/panel`, distinto de `/dashboard` (usuario).
 
+- **Entorno de desarrollo remoto detrás del proxy de puertos de VS Code Server** (`http://<host>:8080/proxy/<puerto>/`). El proxy quita ese prefijo antes de reenviar a Next — confirmado empíricamente. Solución aplicada en `apps/web`:
+  - `next.config.mjs` usa `assetPrefix` (no `basePath`): genera y sirve los assets con el prefijo sin exigirlo en el matching de páginas.
+  - `apps/web/lib/base-path.ts#withBasePath()` prefija a mano los enlaces/redirects internos (`next/link`, `redirect()`, props de Clerk), porque `assetPrefix` no los toca.
+  - `NEXT_PUBLIC_CLERK_SIGN_IN_URL`/`SIGN_UP_URL`/`AFTER_SIGN_IN_URL`/`AFTER_SIGN_UP_URL` en `.env.local` van con el prefijo puesto a mano (`/proxy/<puerto>/login`, etc.) — Next.js no interpola `${BASE_PATH}` dentro de `.env`, así que si `BASE_PATH` cambia hay que actualizar estas 4 líneas también.
+  - **Limitación conocida, sin arreglo por configuración**: Clerk (instancia de desarrollo, dominio `*.clerk.accounts.dev`) hace un "handshake" de cookies entre dominios la primera vez que el navegador no tiene la cookie `__clerk_db_jwt` (`__clerk_hs_reason=dev-browser-missing`) — típicamente tras cerrar sesión, en navegación privada, o al borrar cookies. La URL de retorno de ese handshake la construye Clerk a partir del host/path de la petición entrante, que ya no lleva el prefijo del proxy (lo quitó el proxy antes de llegar a Next) — así que el handshake rebota a la raíz del proxy (el propio VS Code Server) en vez de a la app. Revisado sin éxito: `proxyUrl` de Clerk (es para otra cosa, proxear su Frontend API, no la app propia), cabeceras `X-Forwarded-*` (el proxy no las envía). **Mitigación aceptada**: mientras la cookie de dev-browser siga viva, el login funciona bien; si se pierde, hay que volver a entrar pegando a mano la URL completa con el prefijo (`/proxy/<puerto>/login`). Para probar el backend de forma fiable sin depender de este ciclo, generar un JWT real vía `clerkClient.sessions.createSession()` + `getToken()` (Backend API) en un script puntual, sin pasar por el navegador.
+
 ---
 
 *Documento generado el 20/06/2026. Versión 1.0.*
-*Última actualización: 10/07/2026 — integración de Clerk en apps/web (§3, §16, §18).*
+*Última actualización: 26/07/2026 — proxy de puertos del entorno de desarrollo y limitación del handshake de Clerk (§18).*
 *Actualizar este documento cada vez que se tome una decisión de producto o arquitectura relevante.*
