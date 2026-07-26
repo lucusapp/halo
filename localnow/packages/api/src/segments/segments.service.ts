@@ -34,9 +34,12 @@ export class SegmentsService {
     return this.toResult(segment);
   }
 
-  // POST /admin/segments/recompute (§12): recalcula TODOS los segmentos activos.
-  async recomputeAll(): Promise<SegmentResult[]> {
-    const segments = await this.prisma.segment.findMany({ where: { active: true } });
+  // POST /admin/segments/recompute (§12, vía AdminService.recomputeSegments):
+  // recalcula los segmentos activos, opcionalmente solo los de una ciudad.
+  async recompute(cityId?: string): Promise<SegmentResult[]> {
+    const segments = await this.prisma.segment.findMany({
+      where: { active: true, ...(cityId ? { cityId } : {}) },
+    });
     const results: SegmentResult[] = [];
     for (const segment of segments) {
       results.push(await this.recomputeOne(segment));

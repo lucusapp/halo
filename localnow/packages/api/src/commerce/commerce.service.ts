@@ -35,6 +35,17 @@ export class CommerceService {
     return this.toPublicResult(commerce);
   }
 
+  // GET /admin/commerce/pending (§12, vía AdminService.getCommercesPending) — altas
+  // a la espera de revisión manual (§9.1). Vista de dueño (OwnCommerceResult): quien
+  // modera necesita ver el CIF, no solo lo que vería el público.
+  async findPending(): Promise<OwnCommerceResult[]> {
+    const commerces = await this.prisma.commerce.findMany({
+      where: { active: false },
+      orderBy: { createdAt: 'asc' },
+    });
+    return commerces.map((commerce) => this.toOwnResult(commerce));
+  }
+
   async create(authId: string, dto: CreateCommerceDto): Promise<PrismaCommerce> {
     const existing = await this.prisma.commerce.findUnique({ where: { authId } });
     if (existing) {

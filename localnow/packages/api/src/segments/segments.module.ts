@@ -7,8 +7,7 @@ import { SegmentsService } from './segments.service';
   imports: [ClerkAuthModule],
   controllers: [SegmentsController],
   providers: [SegmentsService],
-  // CampaignsService consulta UserSegment directamente vía Prisma para enviar
-  // campañas — no necesita importar SegmentsService, así que no hace falta exportarlo
-  // todavía. Se añadirá si algún módulo futuro lo necesita inyectado.
+  // AdminService.recomputeSegments delega en SegmentsService.recompute.
+  exports: [SegmentsService],
 })
 export class SegmentsModule {}
