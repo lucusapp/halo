@@ -1,9 +1,7 @@
-import { randomUUID } from 'node:crypto';
 import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import {
   PaymentMethod as PrismaPaymentMethod,
-  Prisma,
   Transaction as PrismaTransaction,
   TransactionItem as PrismaTransactionItem,
 } from '@prisma/client';
@@ -11,6 +9,7 @@ import { PaymentMethod, TransactionStatus, TRANSACTION_ANONYMOUS_TIMEOUT_MINUTES
 import { PointsService } from '../points/points.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { mirrorEnum } from '../prisma/mirror-enum.util';
+import { QrService } from '../qr/qr.service';
 import { ConfirmSaleDto } from './dto/confirm-sale.dto';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import type { SaleCreatedResult, TicketItemResult, TicketResult, TicketSummaryResult } from './types';
@@ -26,6 +25,7 @@ export class TransactionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly pointsService: PointsService,
+    private readonly qrService: QrService,
   ) {}
 
   // §13.1 pasos 1-5: el comercio registra la venta y recibe el QR para mostrar en
@@ -59,8 +59,8 @@ export class TransactionsService {
     }));
     const totalAmount = round2(items.reduce((sum, item) => sum + item.lineTotal, 0));
 
-    const qrToken = randomUUID();
-    const qrExpiresAt = new Date(Date.now() + TRANSACTION_ANONYMOUS_TIMEOUT_MINUTES * 60_000);
+    const qrToken = this.qrService.generateToken();
+    const qrExpiresAt = this.qrService.computeExpiry(TRANSACTION_ANONYMOUS_TIMEOUT_MINUTES);
 
     const transaction = await this.prisma.transaction.create({
       data: {
@@ -92,19 +92,10 @@ export class TransactionsService {
     };
   }
 
-  // §13.1 pasos 6-9. Orden de verificación del QR igual que en el resto de la app
-  // (§6.6, §17.4): existencia → estado PENDING → no expirado.
+  // §13.1 pasos 6-9. La verificación del QR (existencia → PENDING → no expirado,
+  // §6.6/§17.4) vive en QrService, compartida con Coupons y Rewards.
   async confirmSale(userAuthId: string, dto: ConfirmSaleDto): Promise<TicketResult> {
-    const transaction = await this.prisma.transaction.findUnique({ where: { qrToken: dto.qrToken } });
-    if (!transaction) {
-      throw new NotFoundException('QR no válido');
-    }
-    if (transaction.status !== 'PENDING') {
-      throw new BadRequestException('Este ticket ya no está disponible para confirmar');
-    }
-    if (!transaction.qrExpiresAt || transaction.qrExpiresAt < new Date()) {
-      throw new BadRequestException('El QR ha caducado');
-    }
+    const transaction = await this.qrService.validateTransactionQr(dto.qrToken);
 
     // El cliente debe estar ya registrado en LocalNow (§13.1: "si está registrado") —
     // si no lo está, simplemente no puede escanear y la venta acabará en ANONYMOUS
