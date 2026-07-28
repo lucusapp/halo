@@ -4,6 +4,8 @@ import type {
   CouponType,
   NewsCategory,
   PaymentMethod,
+  ProductSource,
+  ProductUnit,
   RewardType,
   TransactionStatus,
 } from '@localnow/shared';
@@ -125,4 +127,47 @@ export interface AvailableReward {
   type: RewardType;
   locked: boolean;
   pointsMissing: number;
+}
+
+// Réplica de CommerceSaleSummaryResult/PanelDashboardResult (packages/api/src/transactions/types.ts).
+export interface CommerceSaleSummary {
+  id: string;
+  timestamp: string;
+  totalAmount: number;
+  pointsGlobalEarned: number;
+  status: TransactionStatus;
+}
+
+export interface PanelDashboard {
+  today: {
+    salesCount: number;
+    totalAmount: number;
+    pointsGlobalIssued: number;
+  };
+  recentSales: CommerceSaleSummary[];
+}
+
+// Réplica de SaleCreatedResult (packages/api/src/transactions/types.ts) — respuesta
+// de POST /panel/sale/new.
+export interface SaleCreated {
+  transactionId: string;
+  qrToken: string;
+  qrExpiresAt: string;
+  totalAmount: number;
+}
+
+// Réplica de ProductResult (packages/api/src/products/types.ts).
+export interface Product {
+  id: string;
+  commerceId: string;
+  ean: string | null;
+  plu: string | null;
+  name: string;
+  category: string | null;
+  price: number;
+  unit: ProductUnit;
+  imageUrl: string | null;
+  active: boolean;
+  source: ProductSource;
+  createdAt: string;
 }

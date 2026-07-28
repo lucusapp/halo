@@ -12,7 +12,14 @@ import { mirrorEnum } from '../prisma/mirror-enum.util';
 import { QrService } from '../qr/qr.service';
 import { ConfirmSaleDto } from './dto/confirm-sale.dto';
 import { CreateSaleDto } from './dto/create-sale.dto';
-import type { SaleCreatedResult, TicketItemResult, TicketResult, TicketSummaryResult } from './types';
+import type {
+  CommerceSaleSummaryResult,
+  PanelDashboardResult,
+  SaleCreatedResult,
+  TicketItemResult,
+  TicketResult,
+  TicketSummaryResult,
+} from './types';
 
 type TransactionWithItems = PrismaTransaction & { items: PrismaTransactionItem[] };
 
@@ -32,10 +39,7 @@ export class TransactionsService {
   // pantalla. El total y las líneas SIEMPRE se calculan aquí — nunca se acepta un
   // total ya sumado del cliente, para que no pueda desincronizarse de los productos.
   async createSale(commerceAuthId: string, dto: CreateSaleDto): Promise<SaleCreatedResult> {
-    const commerce = await this.prisma.commerce.findUnique({ where: { authId: commerceAuthId } });
-    if (!commerce) {
-      throw new ForbiddenException('Esta cuenta no está registrada como comercio');
-    }
+    const commerce = await this.assertCommerce(commerceAuthId);
     // El panel de venta es parte de la gestión privada, que solo se activa tras la
     // aprobación del alta (§9.1) — un comercio pendiente de revisión no puede vender.
     if (!commerce.active) {
@@ -175,6 +179,46 @@ export class TransactionsService {
     return this.toTicketResult(transaction, transaction.commerce);
   }
 
+  // GET /panel/dashboard (§12) — no exige commerce.active: un comercio pendiente de
+  // aprobación puede ver su panel (vacío), solo tiene bloqueada la creación de
+  // ventas (ver createSale).
+  async getPanelDashboard(commerceAuthId: string): Promise<PanelDashboardResult> {
+    const commerce = await this.assertCommerce(commerceAuthId);
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const [todayAgg, recent] = await Promise.all([
+      this.prisma.transaction.aggregate({
+        where: { commerceId: commerce.id, status: { in: ['CONFIRMED', 'ANONYMOUS'] }, timestamp: { gte: startOfDay } },
+        _count: { _all: true },
+        _sum: { totalAmount: true, pointsGlobalEarned: true },
+      }),
+      this.prisma.transaction.findMany({
+        where: { commerceId: commerce.id, status: { in: ['CONFIRMED', 'ANONYMOUS'] } },
+        orderBy: { timestamp: 'desc' },
+        take: 5,
+      }),
+    ]);
+
+    return {
+      today: {
+        salesCount: todayAgg._count._all,
+        totalAmount: Number(todayAgg._sum.totalAmount ?? 0),
+        pointsGlobalIssued: todayAgg._sum.pointsGlobalEarned ?? 0,
+      },
+      recentSales: recent.map(
+        (transaction): CommerceSaleSummaryResult => ({
+          id: transaction.id,
+          timestamp: transaction.timestamp,
+          totalAmount: Number(transaction.totalAmount),
+          pointsGlobalEarned: transaction.pointsGlobalEarned,
+          status: mirrorEnum<TransactionStatus>(transaction.status),
+        }),
+      ),
+    };
+  }
+
   // §13.1 paso 13: si nadie escanea en 5 minutos, la venta queda anónima pero los
   // datos de venta se conservan (solo se pierde el vínculo con un usuario).
   @Cron(CronExpression.EVERY_MINUTE)
@@ -222,5 +266,13 @@ export class TransactionsService {
       pointsGlobalEarned: transaction.pointsGlobalEarned,
       pointsCommerceEarned: transaction.pointsCommerceEarned,
     };
+  }
+
+  private async assertCommerce(commerceAuthId: string) {
+    const commerce = await this.prisma.commerce.findUnique({ where: { authId: commerceAuthId } });
+    if (!commerce) {
+      throw new ForbiddenException('Esta cuenta no está registrada como comercio');
+    }
+    return commerce;
   }
 }

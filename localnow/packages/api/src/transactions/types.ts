@@ -36,3 +36,24 @@ export interface TicketResult {
 
 // GET /user/tickets: mismo shape sin el desglose de productos, para el listado.
 export type TicketSummaryResult = Omit<TicketResult, 'items'>;
+
+// GET /panel/dashboard (§12) — vista del comercio, no del cliente: "hoy" es un
+// agregado en caliente (CONFIRMED + ANONYMOUS; PENDING no cuenta como venta hasta
+// que se confirme o expire), "recentSales" son las 5 últimas ventas en general (no
+// solo de hoy), para que el panel no quede vacío en días con poca actividad.
+export interface CommerceSaleSummaryResult {
+  id: string;
+  timestamp: Date;
+  totalAmount: number;
+  pointsGlobalEarned: number;
+  status: TransactionStatus;
+}
+
+export interface PanelDashboardResult {
+  today: {
+    salesCount: number;
+    totalAmount: number;
+    pointsGlobalIssued: number;
+  };
+  recentSales: CommerceSaleSummaryResult[];
+}

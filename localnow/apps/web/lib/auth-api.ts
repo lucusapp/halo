@@ -14,7 +14,7 @@ export async function authFetch<T>(path: string, init?: RequestInit): Promise<T>
 
   const response = await fetch(`${API_URL}${path}`, {
     ...init,
-    headers: { ...init?.headers, Authorization: `Bearer ${token}` },
+    headers: { 'Content-Type': 'application/json', ...init?.headers, Authorization: `Bearer ${token}` },
     cache: 'no-store',
   });
 
@@ -33,4 +33,22 @@ export async function authFetch<T>(path: string, init?: RequestInit): Promise<T>
 // mensaje exacto, el mismo que lanzan PointsService/TransactionsService/RewardsService.
 export function isUserNotRegistered(error: unknown): boolean {
   return error instanceof ApiError && error.status === 404 && error.message === 'Usuario no encontrado';
+}
+
+// Igual que isUserNotRegistered pero para el lado comercio: todos los endpoints
+// /panel/* (Coupons/Products/Transactions) lanzan este mismo 403 exacto cuando el
+// authId no corresponde a ningún Commerce en nuestra BD.
+export function isCommerceNotRegistered(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 403 && error.message === 'Esta cuenta no está registrada como comercio';
+}
+
+// Solo lo lanza TransactionsService.createSale: el comercio existe pero su alta
+// todavía no ha sido aprobada por un admin (§9.1) — a diferencia del resto de
+// /panel/*, que sí funcionan (en modo "borrador") antes de la aprobación.
+export function isCommerceNotActive(error: unknown): boolean {
+  return (
+    error instanceof ApiError &&
+    error.status === 403 &&
+    error.message === 'El comercio todavía no está activo — el alta debe aprobarse antes de poder vender'
+  );
 }

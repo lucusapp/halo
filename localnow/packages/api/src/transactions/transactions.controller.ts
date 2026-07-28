@@ -5,7 +5,7 @@ import type { ClerkJwtClaims } from '../clerk-auth/types';
 import { ConfirmSaleDto } from './dto/confirm-sale.dto';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { TransactionsService } from './transactions.service';
-import type { SaleCreatedResult, TicketResult, TicketSummaryResult } from './types';
+import type { PanelDashboardResult, SaleCreatedResult, TicketResult, TicketSummaryResult } from './types';
 
 // Rutas explícitas por §12 (/panel/sale/new, /user/tickets...) en vez de un único
 // prefijo de recurso: no comparten un prefijo común porque el dueño de cada una es
@@ -18,6 +18,11 @@ export class TransactionsController {
   @Post('panel/sale/new')
   createSale(@CurrentUser() claims: ClerkJwtClaims, @Body() dto: CreateSaleDto): Promise<SaleCreatedResult> {
     return this.transactionsService.createSale(claims.sub, dto);
+  }
+
+  @Get('panel/dashboard')
+  getPanelDashboard(@CurrentUser() claims: ClerkJwtClaims): Promise<PanelDashboardResult> {
+    return this.transactionsService.getPanelDashboard(claims.sub);
   }
 
   // No está en el §12 explícitamente (ese documenta /qr/validate para que el
