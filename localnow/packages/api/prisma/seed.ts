@@ -160,6 +160,44 @@ async function main() {
     });
   }
 
+  const rewards = [
+    {
+      id: 'seed-reward-global-cafe',
+      commerceId: null,
+      title: 'Café gratis en cualquier comercio adherido',
+      description: 'Canjeable en cualquier cafetería participante de LocalNow.',
+      pointsCost: 50,
+      valueEuros: 1.5,
+      type: 'GIFT' as const,
+    },
+    {
+      id: 'seed-reward-global-5eur',
+      commerceId: null,
+      title: '5€ de descuento LocalNow',
+      description: 'Descuento aplicable en tu próxima compra en cualquier comercio adherido.',
+      pointsCost: 200,
+      valueEuros: 5,
+      type: 'DISCOUNT_FIXED' as const,
+    },
+    {
+      id: 'seed-reward-taberna-postre',
+      commerceId: 'seed-commerce-taberna',
+      title: 'Postre de la casa gratis',
+      description: 'Solo en Taberna A Muralla, con consumición previa.',
+      pointsCost: 30,
+      valueEuros: 4,
+      type: 'FREE_PRODUCT' as const,
+    },
+  ];
+
+  for (const reward of rewards) {
+    await prisma.reward.upsert({
+      where: { id: reward.id },
+      update: {},
+      create: { ...reward, active: true },
+    });
+  }
+
   const articles = [
     {
       id: 'seed-article-1',

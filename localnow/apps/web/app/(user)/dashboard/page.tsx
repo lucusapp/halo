@@ -1,53 +1,68 @@
+import Link from 'next/link';
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { SignOutButton } from '@clerk/nextjs';
 import { redirect } from 'next/navigation';
 import { withBasePath } from '@/lib/base-path';
+import { authFetch, isUserNotRegistered } from '@/lib/auth-api';
+import type { TicketSummary, UserPoints } from '@/lib/types';
+import { CompleteRegistrationForm } from '../complete-registration-form';
+import { PointsSummaryCard } from '@/components/points/points-summary-card';
+import { TicketSummaryRow } from '@/components/tickets/ticket-summary-row';
 
-// Página de prueba: el middleware ya exige sesión para /dashboard, pero se repite la
-// comprobación aquí porque es la forma recomendada por Clerk de acceder a los datos de
-// auth en un Server Component (auth() no protege por sí solo, solo informa).
 export default async function DashboardPage() {
-  const { userId, getToken } = await auth();
+  const { userId } = await auth();
   if (!userId) {
     redirect(withBasePath('/login'));
   }
 
   const user = await currentUser();
-  // JWT de sesión de Clerk — pégalo en `Authorization: Bearer <token>` para probar
-  // los endpoints de packages/api/src/auth (POST /auth/login, /auth/register/user...).
-  // Es un token de sesión real de corta duración: no lo compartas ni lo commitees.
-  const sessionToken = await getToken();
+
+  let points: UserPoints;
+  let tickets: TicketSummary[];
+  try {
+    [points, tickets] = await Promise.all([
+      authFetch<UserPoints>('/user/points'),
+      authFetch<TicketSummary[]>('/user/tickets'),
+    ]);
+  } catch (error) {
+    if (isUserNotRegistered(error)) {
+      return (
+        <div className="flex flex-col gap-6">
+          <h1 className="text-2xl font-bold text-gray-900">Hola{user?.firstName ? `, ${user.firstName}` : ''}</h1>
+          <CompleteRegistrationForm />
+        </div>
+      );
+    }
+    throw error;
+  }
+
+  const recentTickets = tickets.slice(0, 3);
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-xl flex-col gap-6 p-8">
-      <h1 className="text-2xl font-semibold">Mi cuenta</h1>
-
-      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-        <dt className="font-medium text-gray-500">Clerk user ID</dt>
-        <dd className="break-all">{userId}</dd>
-        <dt className="font-medium text-gray-500">Email</dt>
-        <dd>{user?.primaryEmailAddress?.emailAddress ?? '—'}</dd>
-        <dt className="font-medium text-gray-500">Nombre</dt>
-        <dd>{user?.fullName ?? '—'}</dd>
-      </dl>
-
+    <div className="flex flex-col gap-6">
       <div>
-        <p className="mb-1 text-sm font-medium text-gray-500">
-          JWT de sesión (para probar el backend NestJS)
-        </p>
-        <textarea
-          readOnly
-          value={sessionToken ?? ''}
-          rows={6}
-          className="w-full rounded border border-gray-300 p-2 font-mono text-xs"
-        />
+        <h1 className="text-2xl font-bold text-gray-900">{user?.fullName ?? user?.firstName ?? 'Mi cuenta'}</h1>
+        <p className="text-sm text-gray-500">{user?.primaryEmailAddress?.emailAddress}</p>
       </div>
 
-      <SignOutButton redirectUrl={withBasePath('/login')}>
-        <button type="button" className="w-fit rounded bg-gray-900 px-4 py-2 text-sm text-white">
-          Cerrar sesión
-        </button>
-      </SignOutButton>
-    </main>
+      <PointsSummaryCard points={points} />
+
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-gray-900">Últimos tickets</h2>
+          <Link href={withBasePath('/tickets')} className="text-sm text-gray-500 underline">
+            Ver todos
+          </Link>
+        </div>
+        {recentTickets.length === 0 ? (
+          <p className="text-sm text-gray-500">Todavía no tienes compras registradas.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {recentTickets.map((ticket) => (
+              <TicketSummaryRow key={ticket.id} ticket={ticket} />
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
   );
 }

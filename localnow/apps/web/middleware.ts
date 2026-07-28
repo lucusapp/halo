@@ -4,7 +4,7 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 // path real, no por carpeta. OJO: si en el futuro se crea apps/web/app/(panel)/dashboard
 // colisiona con apps/web/app/(user)/dashboard (ambos resuelven a /dashboard) — hay que
 // renombrar uno de los dos antes de construir el panel de comercio.
-const isProtectedRoute = createRouteMatcher(['/dashboard(.*)', '/tickets(.*)', '/points(.*)', '/pos(.*)']);
+const isProtectedRoute = createRouteMatcher(['/dashboard(.*)', '/tickets(.*)', '/puntos(.*)', '/pos(.*)']);
 
 export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {

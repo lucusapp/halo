@@ -23,6 +23,8 @@ export interface TicketItemResult {
 export interface TicketResult {
   id: string;
   commerceId: string;
+  commerceName: string;
+  commerceSlug: string;
   status: TransactionStatus;
   timestamp: Date;
   totalAmount: number;

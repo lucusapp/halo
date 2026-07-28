@@ -139,7 +139,7 @@ export class TransactionsService {
       });
     });
 
-    return this.toTicketResult(confirmed);
+    return this.toTicketResult(confirmed, commerce);
   }
 
   async getUserTickets(userAuthId: string): Promise<TicketSummaryResult[]> {
@@ -150,9 +150,10 @@ export class TransactionsService {
 
     const transactions = await this.prisma.transaction.findMany({
       where: { userId: user.id },
+      include: { commerce: { select: { name: true, slug: true } } },
       orderBy: { timestamp: 'desc' },
     });
-    return transactions.map((transaction) => this.toTicketSummaryResult(transaction));
+    return transactions.map((transaction) => this.toTicketSummaryResult(transaction, transaction.commerce));
   }
 
   async getUserTicket(userAuthId: string, id: string): Promise<TicketResult> {
@@ -161,14 +162,17 @@ export class TransactionsService {
       throw new NotFoundException('Usuario no encontrado');
     }
 
-    const transaction = await this.prisma.transaction.findUnique({ where: { id }, include: { items: true } });
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { id },
+      include: { items: true, commerce: { select: { name: true, slug: true } } },
+    });
     // Mismo 404 si no existe o si no es tuyo: un ticket es un dato financiero
     // privado, no se distingue "no existe" de "no es tuyo".
     if (!transaction || transaction.userId !== user.id) {
       throw new NotFoundException('Ticket no encontrado');
     }
 
-    return this.toTicketResult(transaction);
+    return this.toTicketResult(transaction, transaction.commerce);
   }
 
   // §13.1 paso 13: si nadie escanea en 5 minutos, la venta queda anónima pero los
@@ -181,9 +185,12 @@ export class TransactionsService {
     });
   }
 
-  private toTicketResult(transaction: TransactionWithItems): TicketResult {
+  private toTicketResult(
+    transaction: TransactionWithItems,
+    commerce: { name: string; slug: string },
+  ): TicketResult {
     return {
-      ...this.toTicketSummaryResult(transaction),
+      ...this.toTicketSummaryResult(transaction, commerce),
       items: transaction.items.map((item): TicketItemResult => ({
         productId: item.productId,
         ean: item.ean,
@@ -196,10 +203,18 @@ export class TransactionsService {
     };
   }
 
-  private toTicketSummaryResult(transaction: PrismaTransaction): TicketSummaryResult {
+  // commerceName/commerceSlug se pasan ya resueltos (no se vuelven a consultar aquí)
+  // para no obligar a cada llamador a decidir cómo obtener el comercio — confirmSale
+  // ya lo tiene en memoria, getUserTickets/getUserTicket lo traen con un include.
+  private toTicketSummaryResult(
+    transaction: PrismaTransaction,
+    commerce: { name: string; slug: string },
+  ): TicketSummaryResult {
     return {
       id: transaction.id,
       commerceId: transaction.commerceId,
+      commerceName: commerce.name,
+      commerceSlug: commerce.slug,
       status: mirrorEnum<TransactionStatus>(transaction.status),
       timestamp: transaction.timestamp,
       totalAmount: Number(transaction.totalAmount),
