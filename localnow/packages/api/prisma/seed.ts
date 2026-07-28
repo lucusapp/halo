@@ -24,6 +24,42 @@ async function main() {
     },
   });
 
+  // Fuentes RSS reales (medios gallegos) para poblar la BD con noticias de verdad
+  // vía NewsService.fetchAndStore(). Cada fuente solo admite una categoría
+  // (NewsArticle.category es obligatorio y se hereda de la fuente, no del feed
+  // en sí, que mezcla secciones) — se reparten para poder probar el filtro.
+  const realSources = [
+    {
+      id: 'seed-source-farodevigo',
+      name: 'Faro de Vigo',
+      url: 'https://www.farodevigo.es',
+      feedUrl: 'https://www.farodevigo.es/rss/2.0/?section=portada',
+      category: 'MUNICIPIO' as const,
+    },
+    {
+      id: 'seed-source-lavozdegalicia',
+      name: 'La Voz de Galicia',
+      url: 'https://www.lavozdegalicia.es',
+      feedUrl: 'https://www.lavozdegalicia.es/rss/index.xml',
+      category: 'SOCIEDAD' as const,
+    },
+    {
+      id: 'seed-source-elcorreogallego',
+      name: 'El Correo Gallego',
+      url: 'https://www.elcorreogallego.es',
+      feedUrl: 'https://www.elcorreogallego.es/rss',
+      category: 'CULTURA' as const,
+    },
+  ];
+
+  for (const realSource of realSources) {
+    await prisma.newsSource.upsert({
+      where: { id: realSource.id },
+      update: {},
+      create: { ...realSource, cityId: city.id, active: true },
+    });
+  }
+
   const commerces = [
     {
       id: 'seed-commerce-taberna',

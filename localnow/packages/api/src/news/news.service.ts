@@ -1,12 +1,20 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { NewsArticle as PrismaNewsArticle, NewsCategory as PrismaNewsCategory, Prisma } from '@prisma/client';
+import {
+  NewsArticle as PrismaNewsArticle,
+  NewsCategory as PrismaNewsCategory,
+  NewsSource as PrismaNewsSource,
+  Prisma,
+} from '@prisma/client';
 import Parser from 'rss-parser';
 import { NewsCategory } from '@localnow/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { mirrorEnum } from '../prisma/mirror-enum.util';
+import { categorizeArticle } from './categorize-article.util';
+import { CreateNewsSourceDto } from './dto/create-news-source.dto';
 import { FindNewsQueryDto } from './dto/find-news-query.dto';
-import type { NewsArticleResult, PaginatedNewsResult } from './types';
+import { UpdateNewsSourceDto } from './dto/update-news-source.dto';
+import type { NewsArticleResult, NewsSourceResult, PaginatedNewsResult } from './types';
 
 const PAGE_SIZE = 20;
 // §4.4: "Resumen corto (máx. 2 líneas)" — no hay forma exacta de contar líneas de
@@ -57,27 +65,26 @@ export class NewsService {
     cityId: string,
     sourceCategory: PrismaNewsCategory | null,
   ): Promise<void> {
-    if (!sourceCategory) {
-      // NewsArticle.category es obligatorio; sin categoría en la fuente no hay forma
-      // correcta de clasificar sus artículos — se omite hasta que se configure.
-      this.logger.warn(`Fuente ${sourceId} sin categoría configurada, se omite`);
-      return;
-    }
-
     const feed = await this.parser.parseURL(feedUrl);
 
     const items = feed.items
       .filter((item) => item.link && item.title)
-      .map((item) => ({
-        sourceId,
-        cityId,
-        title: item.title!.trim(),
-        summary: this.truncateSummary(item.contentSnippet ?? item.summary ?? item.content),
-        url: item.link!,
-        imageUrl: item.enclosure?.url ?? item.mediaContent?.$?.url ?? null,
-        category: sourceCategory,
-        publishedAt: item.isoDate ? new Date(item.isoDate) : item.pubDate ? new Date(item.pubDate) : new Date(),
-      }));
+      .map((item) => {
+        const summary = this.truncateSummary(item.contentSnippet ?? item.summary ?? item.content);
+        return {
+          sourceId,
+          cityId,
+          title: item.title!.trim(),
+          summary,
+          url: item.link!,
+          imageUrl: item.enclosure?.url ?? item.mediaContent?.$?.url ?? null,
+          // Categoría por artículo (palabras clave en título+resumen), no por fuente:
+          // un mismo feed mezcla secciones. sourceCategory solo actúa de resguardo
+          // cuando ninguna palabra clave coincide.
+          category: categorizeArticle(`${item.title} ${summary ?? ''}`, sourceCategory),
+          publishedAt: item.isoDate ? new Date(item.isoDate) : item.pubDate ? new Date(item.pubDate) : new Date(),
+        };
+      });
 
     if (items.length > 0) {
       await this.prisma.newsArticle.createMany({ data: items, skipDuplicates: true });
@@ -137,6 +144,78 @@ export class NewsService {
       include: { source: { select: { name: true } } },
     });
     return this.toResult(updated);
+  }
+
+  // GET /admin/news-sources — gestión de fuentes RSS (§4.3): añadir/quitar/editar
+  // sin tocar código ni base de datos a mano.
+  async findAllSources(): Promise<NewsSourceResult[]> {
+    const sources = await this.prisma.newsSource.findMany({ orderBy: { name: 'asc' } });
+    return sources.map((source) => this.toSourceResult(source));
+  }
+
+  async createSource(dto: CreateNewsSourceDto): Promise<NewsSourceResult> {
+    await this.assertCityExists(dto.cityId);
+    const source = await this.prisma.newsSource.create({
+      data: {
+        cityId: dto.cityId,
+        name: dto.name,
+        url: dto.url,
+        feedUrl: dto.feedUrl ?? null,
+        category: dto.category ? mirrorEnum<PrismaNewsCategory>(dto.category) : null,
+        active: dto.active ?? true,
+      },
+    });
+    return this.toSourceResult(source);
+  }
+
+  async updateSource(id: string, dto: UpdateNewsSourceDto): Promise<NewsSourceResult> {
+    await this.assertSourceExists(id);
+    const source = await this.prisma.newsSource.update({
+      where: { id },
+      data: {
+        ...(dto.name !== undefined ? { name: dto.name } : {}),
+        ...(dto.url !== undefined ? { url: dto.url } : {}),
+        ...(dto.feedUrl !== undefined ? { feedUrl: dto.feedUrl } : {}),
+        ...(dto.category !== undefined ? { category: mirrorEnum<PrismaNewsCategory>(dto.category) } : {}),
+        ...(dto.active !== undefined ? { active: dto.active } : {}),
+      },
+    });
+    return this.toSourceResult(source);
+  }
+
+  // Cascade en NewsArticle.sourceId (schema.prisma): borrar una fuente borra
+  // también todos sus artículos ya guardados, no solo la desactiva.
+  async deleteSource(id: string): Promise<void> {
+    await this.assertSourceExists(id);
+    await this.prisma.newsSource.delete({ where: { id } });
+  }
+
+  private async assertCityExists(cityId: string): Promise<void> {
+    const city = await this.prisma.city.findUnique({ where: { id: cityId } });
+    if (!city) {
+      throw new NotFoundException(`La ciudad ${cityId} no existe`);
+    }
+  }
+
+  private async assertSourceExists(id: string): Promise<void> {
+    const source = await this.prisma.newsSource.findUnique({ where: { id } });
+    if (!source) {
+      throw new NotFoundException('Fuente no encontrada');
+    }
+  }
+
+  private toSourceResult(source: PrismaNewsSource): NewsSourceResult {
+    return {
+      id: source.id,
+      cityId: source.cityId,
+      name: source.name,
+      url: source.url,
+      feedUrl: source.feedUrl,
+      category: source.category ? mirrorEnum<NewsCategory>(source.category) : null,
+      active: source.active,
+      lastFetchedAt: source.lastFetchedAt,
+      createdAt: source.createdAt,
+    };
   }
 
   private truncateSummary(text: string | undefined): string | null {

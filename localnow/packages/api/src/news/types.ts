@@ -21,3 +21,17 @@ export interface PaginatedNewsResult {
   total: number;
   totalPages: number;
 }
+
+export interface NewsSourceResult {
+  id: string;
+  cityId: string;
+  name: string;
+  url: string;
+  feedUrl: string | null;
+  // Solo resguardo (fallback) cuando la heurística por palabras clave no clasifica
+  // el artículo — ver categorize-article.util.ts.
+  category: NewsCategory | null;
+  active: boolean;
+  lastFetchedAt: Date | null;
+  createdAt: Date;
+}

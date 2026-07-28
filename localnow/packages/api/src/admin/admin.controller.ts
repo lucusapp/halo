@@ -1,9 +1,22 @@
-import { Body, Controller, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { AdminGuard } from '../clerk-auth/admin.guard';
 import { JwtAuthGuard } from '../clerk-auth/jwt-auth.guard';
 import type { OwnCommerceResult } from '../commerce/types';
 import type { CouponResult } from '../coupons/types';
-import type { NewsArticleResult } from '../news/types';
+import { CreateNewsSourceDto } from '../news/dto/create-news-source.dto';
+import { UpdateNewsSourceDto } from '../news/dto/update-news-source.dto';
+import type { NewsArticleResult, NewsSourceResult } from '../news/types';
 import type { SegmentResult } from '../segments/types';
 import { AdminService } from './admin.service';
 import { RecomputeSegmentsDto } from './dto/recompute-segments.dto';
@@ -32,6 +45,27 @@ export class AdminController {
   @Put('news/:id/featured')
   markArticleFeatured(@Param('id') id: string): Promise<NewsArticleResult> {
     return this.adminService.markArticleFeatured(id);
+  }
+
+  @Get('news-sources')
+  getNewsSources(): Promise<NewsSourceResult[]> {
+    return this.adminService.getNewsSources();
+  }
+
+  @Post('news-sources')
+  createNewsSource(@Body() dto: CreateNewsSourceDto): Promise<NewsSourceResult> {
+    return this.adminService.createNewsSource(dto);
+  }
+
+  @Put('news-sources/:id')
+  updateNewsSource(@Param('id') id: string, @Body() dto: UpdateNewsSourceDto): Promise<NewsSourceResult> {
+    return this.adminService.updateNewsSource(id, dto);
+  }
+
+  @Delete('news-sources/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteNewsSource(@Param('id') id: string): Promise<void> {
+    return this.adminService.deleteNewsSource(id);
   }
 
   @Get('analytics/global')

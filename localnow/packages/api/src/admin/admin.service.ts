@@ -3,8 +3,10 @@ import { CommerceService } from '../commerce/commerce.service';
 import type { OwnCommerceResult } from '../commerce/types';
 import { CouponsService } from '../coupons/coupons.service';
 import type { CouponResult } from '../coupons/types';
+import { CreateNewsSourceDto } from '../news/dto/create-news-source.dto';
+import { UpdateNewsSourceDto } from '../news/dto/update-news-source.dto';
 import { NewsService } from '../news/news.service';
-import type { NewsArticleResult } from '../news/types';
+import type { NewsArticleResult, NewsSourceResult } from '../news/types';
 import { PrismaService } from '../prisma/prisma.service';
 import { SegmentsService } from '../segments/segments.service';
 import type { SegmentResult } from '../segments/types';
@@ -40,6 +42,22 @@ export class AdminService {
 
   async markArticleFeatured(id: string): Promise<NewsArticleResult> {
     return this.newsService.markFeatured(id);
+  }
+
+  async getNewsSources(): Promise<NewsSourceResult[]> {
+    return this.newsService.findAllSources();
+  }
+
+  async createNewsSource(dto: CreateNewsSourceDto): Promise<NewsSourceResult> {
+    return this.newsService.createSource(dto);
+  }
+
+  async updateNewsSource(id: string, dto: UpdateNewsSourceDto): Promise<NewsSourceResult> {
+    return this.newsService.updateSource(id, dto);
+  }
+
+  async deleteNewsSource(id: string): Promise<void> {
+    return this.newsService.deleteSource(id);
   }
 
   async recomputeSegments(cityId?: string): Promise<SegmentResult[]> {
