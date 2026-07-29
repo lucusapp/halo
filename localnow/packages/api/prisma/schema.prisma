@@ -19,22 +19,42 @@ datasource db {
 // Enums
 // ────────────────────────────────────────────────────────────────
 
+// PROYECTO.md §19: 15 categorías de contenido, 3 sin vinculación comercial directa
+// (Municipio, Judicial, Sociedad) — CommerceCategory usa el mismo espacio de valores
+// para las 12 restantes a propósito, así el mapeo editorial-comercio de cada tarjeta
+// de noticia es una igualdad de categoría, sin tabla de traducción intermedia.
 enum NewsCategory {
   MUNICIPIO
   DEPORTES
   ECONOMIA
+  GASTRONOMIA
+  HOGAR_DECORACION
+  SALUD_BIENESTAR
+  CULTURA_OCIO
+  EDUCACION
+  TECNOLOGIA
+  MODA_BELLEZA
+  MOTOR
+  MASCOTAS
+  INMOBILIARIA
   JUDICIAL
-  CULTURA
-  DIPUTACION
   SOCIEDAD
 }
 
+// Subconjunto de NewsCategory (§19.1) — mismos valores, sin MUNICIPIO/JUDICIAL/SOCIEDAD.
 enum CommerceCategory {
-  RESTAURACION
-  COMERCIO
-  SERVICIOS
-  OCIO
-  SALUD
+  DEPORTES
+  ECONOMIA
+  GASTRONOMIA
+  HOGAR_DECORACION
+  SALUD_BIENESTAR
+  CULTURA_OCIO
+  EDUCACION
+  TECNOLOGIA
+  MODA_BELLEZA
+  MOTOR
+  MASCOTAS
+  INMOBILIARIA
 }
 
 enum SubscriptionPlan {

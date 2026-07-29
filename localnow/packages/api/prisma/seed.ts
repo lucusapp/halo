@@ -25,9 +25,9 @@ async function main() {
   });
 
   // Fuentes RSS reales (medios gallegos) para poblar la BD con noticias de verdad
-  // vía NewsService.fetchAndStore(). Cada fuente solo admite una categoría
-  // (NewsArticle.category es obligatorio y se hereda de la fuente, no del feed
-  // en sí, que mezcla secciones) — se reparten para poder probar el filtro.
+  // vía NewsService.fetchAndStore(). category aquí es solo un resguardo (fallback):
+  // cada artículo se clasifica por su propio contenido vía categorize-article.util.ts,
+  // esta categoría solo se usa si ninguna palabra clave coincide.
   const realSources = [
     {
       id: 'seed-source-farodevigo',
@@ -48,7 +48,7 @@ async function main() {
       name: 'El Correo Gallego',
       url: 'https://www.elcorreogallego.es',
       feedUrl: 'https://www.elcorreogallego.es/rss',
-      category: 'CULTURA' as const,
+      category: 'CULTURA_OCIO' as const,
     },
   ];
 
@@ -66,7 +66,7 @@ async function main() {
       authId: 'seed-auth-taberna',
       name: 'Taberna A Muralla',
       slug: 'taberna-a-muralla',
-      category: 'RESTAURACION' as const,
+      category: 'GASTRONOMIA' as const,
       cif: 'B00000001',
       address: 'Rúa Nova 12, Lugo',
       email: 'contacto@tabernaamuralla.example',
@@ -78,7 +78,7 @@ async function main() {
       authId: 'seed-auth-libreria',
       name: 'Librería Follas Novas',
       slug: 'libreria-follas-novas',
-      category: 'COMERCIO' as const,
+      category: 'CULTURA_OCIO' as const,
       cif: 'B00000002',
       address: 'Praza Maior 5, Lugo',
       email: 'contacto@follasnovas.example',
@@ -90,7 +90,7 @@ async function main() {
       authId: 'seed-auth-peluqueria',
       name: 'Peluquería Estilo Norte',
       slug: 'peluqueria-estilo-norte',
-      category: 'SERVICIOS' as const,
+      category: 'MODA_BELLEZA' as const,
       cif: 'B00000003',
       address: 'Ronda da Muralla 20, Lugo',
       email: 'contacto@estilonorte.example',
@@ -102,7 +102,7 @@ async function main() {
       authId: 'seed-auth-cine',
       name: 'Cines Yelmo Lugo',
       slug: 'cines-yelmo-lugo',
-      category: 'OCIO' as const,
+      category: 'CULTURA_OCIO' as const,
       cif: 'B00000004',
       address: 'Avenida Coruña 500, Lugo',
       email: 'contacto@yelmolugo.example',
@@ -246,7 +246,7 @@ async function main() {
       summary: 'La fiesta de recreación histórica se celebrará el próximo fin de semana.',
       url: 'https://example.com/diario-de-lugo/arde-lucus',
       imageUrl: 'https://images.unsplash.com/photo-1533106418989-88406c7cc8ca?w=800',
-      category: 'CULTURA' as const,
+      category: 'CULTURA_OCIO' as const,
       featured: false,
       hoursAgo: 20,
     },
@@ -256,7 +256,9 @@ async function main() {
       summary: 'Las obras beneficiarán a una veintena de ayuntamientos de la provincia.',
       url: 'https://example.com/diario-de-lugo/diputacion-carreteras',
       imageUrl: null,
-      category: 'DIPUTACION' as const,
+      // DIPUTACION ya no existe como categoría propia (§19.1): el contenido de
+      // organismos provinciales queda dentro de MUNICIPIO.
+      category: 'MUNICIPIO' as const,
       featured: false,
       hoursAgo: 30,
     },
@@ -286,7 +288,7 @@ async function main() {
     });
   }
 
-  console.log('Seed completado: 1 ciudad, 4 comercios, 3 cupones, 7 noticias.');
+  console.log('Seed completado: 1 ciudad, 4 comercios, 3 cupones, 3 recompensas, 7 noticias.');
 }
 
 main()
