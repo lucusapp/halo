@@ -281,3 +281,10 @@ export interface GlobalAnalytics {
   coupons: { total: number; active: number; totalRedemptions: number };
   campaigns: { total: number; active: number; totalImpressions: number };
 }
+
+// Réplica de PublicCityResult (packages/api/src/cities/types.ts).
+export interface PublicCity {
+  id: string;
+  name: string;
+  slug: string;
+}

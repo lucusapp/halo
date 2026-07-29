@@ -4,6 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { CampaignsModule } from './campaigns/campaigns.module';
+import { CitiesModule } from './cities/cities.module';
 import { CommerceModule } from './commerce/commerce.module';
 import { CouponsModule } from './coupons/coupons.module';
 import { NewsModule } from './news/news.module';
@@ -22,6 +23,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
+    CitiesModule,
     NewsModule,
     CommerceModule,
     TransactionsModule,
