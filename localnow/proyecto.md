@@ -64,13 +64,22 @@ El **toque diferencial y el modelo de negocio principal** es el sistema de datos
 La revista funciona como un agregador dinámico de fuentes locales. Las noticias se presentan en una cuadrícula tipo Flipboard donde las tarjetas tienen distintos tamaños según su relevancia (hero card, tarjeta doble, tarjeta wide, tarjeta estándar).
 
 ### 4.2 Categorías de noticias
-- Municipio (ayuntamiento, concello)
-- Deportes
-- Economía
-- Judicial
-- Cultura
-- Diputación / organismos oficiales
-- Sociedad
+Categorías definitivas — ver §19 para el detalle de vinculación editorial-comercio de cada una.
+1. Municipio (ayuntamiento, concello, servicios públicos)
+2. Deportes
+3. Economía
+4. Gastronomía
+5. Hogar y Decoración
+6. Salud y Bienestar
+7. Cultura y Ocio
+8. Educación
+9. Tecnología
+10. Moda y Belleza
+11. Motor
+12. Mascotas
+13. Inmobiliaria
+14. Judicial
+15. Sociedad
 
 ### 4.3 Fuentes de noticias (por integrar)
 - RSS de periódicos locales (Faro de Vigo, El Correo Gallego, etc.)
@@ -102,11 +111,19 @@ El usuario puede filtrar por categoría mediante pills horizontales desplazables
 Directorio de empresas locales adheridas a la plataforma. Cada comercio tiene un perfil con su información, ofertas activas y participa en el sistema de puntos y campañas.
 
 ### 5.2 Categorías de comercios
-- Restauración
-- Comercio (alimentación, moda, hogar...)
-- Servicios (peluquería, taller, fontanería...)
-- Ocio (bares, cine, actividades...)
-- Salud (clínica, farmacia, óptica...)
+Mismo espacio de valores que las categorías de noticias (§4.2, §19) — así el mapeo editorial-comercio es una simple igualdad de categoría, sin tabla de traducción intermedia. Quedan fuera las 3 categorías de noticias sin vinculación comercial directa (Municipio, Judicial, Sociedad):
+1. Deportes
+2. Economía
+3. Gastronomía
+4. Hogar y Decoración
+5. Salud y Bienestar
+6. Cultura y Ocio
+7. Educación
+8. Tecnología
+9. Moda y Belleza
+10. Motor
+11. Mascotas
+12. Inmobiliaria
 
 ### 5.3 Sistema de cupones
 Los comercios pueden crear cupones con:
@@ -729,6 +746,41 @@ Avisos y decisiones puntuales surgidas durante la implementación, pendientes de
 
 ---
 
+## 19. Categorías definitivas y mapeo editorial-comercio
+
+### 19.1 Categorías de contenido y vinculación a comercios
+
+1. **Municipio** → servicios públicos, ayuntamiento, policía local, bomberos, transporte, urbanismo. Sin vinculación comercial directa.
+2. **Deportes** → gimnasios, tiendas deporte, fisioterapeutas, clínicas deportivas
+3. **Economía** → bancos, gestorías, coworking, formación empresarial
+4. **Gastronomía** → restaurantes, bares, cafeterías, tiendas alimentación
+5. **Hogar y Decoración** → muebles, ferretería, electricistas, fontaneros, pintores, interioristas
+6. **Salud y Bienestar** → clínicas, farmacias, ópticas, psicólogos, centros estética, nutricionistas
+7. **Cultura y Ocio** → librerías, bares, salas de conciertos, tiendas música, cines, ocio
+8. **Educación** → academias, librerías, papelerías, centros formación
+9. **Tecnología** → tiendas informática, reparación móviles, servicios digitales
+10. **Moda y Belleza** → tiendas ropa, peluquerías, centros estética, complementos
+11. **Motor** → talleres, concesionarios, gasolineras, tiendas recambios
+12. **Mascotas** → veterinarios, tiendas animales, peluquería canina
+13. **Inmobiliaria** → inmobiliarias, arquitectos, empresas reformas
+14. **Judicial** → información judicial y sucesos locales. Sin vinculación comercial directa.
+15. **Sociedad** → historias locales, solidaridad, vecinos, asociaciones y ONGs locales
+
+### 19.2 Concepto clave
+
+Cada tarjeta de noticia incluye al pie comercios locales vinculados a su categoría. El mapeo es automático por categoría. Esto conecta editorialmente el ámbito noticias con el ámbito comercios y genera una tercera vía de monetización: destacado en artículos de categoría (publicidad contextual premium).
+
+### 19.3 Redacción por IA
+
+Al hacer fetch de cada artículo RSS, el sistema extrae los hechos clave y los redacta de nuevo vía LLM (API de Claude) para:
+- Evitar problemas de derechos de autor
+- Estandarizar el tono editorial de LocalNow
+- Adaptar el contenido al estilo local de cada ciudad
+
+El artículo publicado es propiedad de LocalNow, no copia del original.
+
+---
+
 *Documento generado el 20/06/2026. Versión 1.0.*
-*Última actualización: 26/07/2026 — proxy de puertos del entorno de desarrollo y limitación del handshake de Clerk (§18).*
+*Última actualización: 29/07/2026 — categorías definitivas y mapeo editorial-comercio (§19); §4.2 y §5.2 actualizadas al mismo espacio de categorías.*
 *Actualizar este documento cada vez que se tome una decisión de producto o arquitectura relevante.*

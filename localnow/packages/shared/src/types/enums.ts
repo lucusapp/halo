@@ -2,22 +2,43 @@
 // Mantener sincronizado manualmente: este paquete no depende de @prisma/client
 // para poder usarse también en apps/web y apps/mobile sin arrastrar Node APIs.
 
+// PROYECTO.md §19: 15 categorías de contenido, 3 de ellas (Municipio, Judicial,
+// Sociedad) sin vinculación comercial directa — ver CommerceCategory justo debajo,
+// que usa el mismo espacio de valores para las 12 restantes a propósito, así el
+// mapeo editorial-comercio de cada tarjeta de noticia es una igualdad de categoría
+// sin tabla de traducción intermedia.
 export enum NewsCategory {
   MUNICIPIO = 'MUNICIPIO',
   DEPORTES = 'DEPORTES',
   ECONOMIA = 'ECONOMIA',
+  GASTRONOMIA = 'GASTRONOMIA',
+  HOGAR_DECORACION = 'HOGAR_DECORACION',
+  SALUD_BIENESTAR = 'SALUD_BIENESTAR',
+  CULTURA_OCIO = 'CULTURA_OCIO',
+  EDUCACION = 'EDUCACION',
+  TECNOLOGIA = 'TECNOLOGIA',
+  MODA_BELLEZA = 'MODA_BELLEZA',
+  MOTOR = 'MOTOR',
+  MASCOTAS = 'MASCOTAS',
+  INMOBILIARIA = 'INMOBILIARIA',
   JUDICIAL = 'JUDICIAL',
-  CULTURA = 'CULTURA',
-  DIPUTACION = 'DIPUTACION',
   SOCIEDAD = 'SOCIEDAD',
 }
 
+// Subconjunto de NewsCategory (§19.1) — mismos valores, sin MUNICIPIO/JUDICIAL/SOCIEDAD.
 export enum CommerceCategory {
-  RESTAURACION = 'RESTAURACION',
-  COMERCIO = 'COMERCIO',
-  SERVICIOS = 'SERVICIOS',
-  OCIO = 'OCIO',
-  SALUD = 'SALUD',
+  DEPORTES = 'DEPORTES',
+  ECONOMIA = 'ECONOMIA',
+  GASTRONOMIA = 'GASTRONOMIA',
+  HOGAR_DECORACION = 'HOGAR_DECORACION',
+  SALUD_BIENESTAR = 'SALUD_BIENESTAR',
+  CULTURA_OCIO = 'CULTURA_OCIO',
+  EDUCACION = 'EDUCACION',
+  TECNOLOGIA = 'TECNOLOGIA',
+  MODA_BELLEZA = 'MODA_BELLEZA',
+  MOTOR = 'MOTOR',
+  MASCOTAS = 'MASCOTAS',
+  INMOBILIARIA = 'INMOBILIARIA',
 }
 
 export enum SubscriptionPlan {
