@@ -167,6 +167,7 @@ model City {
   campaigns    Campaign[]
   newsSources  NewsSource[]
   newsArticles NewsArticle[]
+  promotions   PlatformPromotion[]
 
   @@map("cities")
 }
@@ -701,4 +702,47 @@ model AdminUser {
   createdAt DateTime @default(now())
 
   @@map("admin_users")
+}
+
+// Fila única (id fijo "singleton", por eso no hay findMany/paginación) de ajustes
+// globales editables desde /admin/configuracion — solo qrExpiryMinutes por ahora.
+// Ver QrService.computeExpiry(): sin fila todavía, cae al valor de
+// @localnow/shared#QR_EXPIRY_MINUTES.
+model PlatformConfig {
+  id String @id @default("singleton")
+
+  qrExpiryMinutes Int @default(15)
+
+  updatedAt DateTime @updatedAt
+
+  @@map("platform_config")
+}
+
+// Promoción de plataforma (§ admin/promociones): bonificación de puntos globales
+// por período, distinta de Campaign (que siempre pertenece a un comercio y lleva
+// pushMessage/targetSegment/budget). Por ahora es solo el registro (CRUD) — todavía
+// no se aplica el multiplicador al calcular puntos ni se envía ningún push.
+model PlatformPromotion {
+  id String @id @default(cuid())
+
+  // null = todas las ciudades
+  cityId String?
+  city   City?   @relation(fields: [cityId], references: [id])
+
+  name        String
+  description String?
+
+  // multiplicador de puntos globales durante el período (ej. 2 = doble puntos)
+  pointsMultiplier Decimal @db.Decimal(4, 2)
+
+  startDate DateTime
+  endDate   DateTime
+
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cityId])
+  @@map("platform_promotions")
 }

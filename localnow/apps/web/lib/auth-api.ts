@@ -52,3 +52,13 @@ export function isCommerceNotActive(error: unknown): boolean {
     error.message === 'El comercio todavía no está activo — el alta debe aprobarse antes de poder vender'
   );
 }
+
+// AdminGuard (packages/api/src/clerk-auth/admin.guard.ts): el JWT es válido pero ese
+// authId no tiene fila en AdminUser. No hay alta de admin autoservicio (es interna,
+// manual) — a diferencia de isCommerceNotRegistered/isUserNotRegistered, aquí no
+// tiene sentido ofrecer ningún formulario, solo informar.
+export function isNotAdmin(error: unknown): boolean {
+  return (
+    error instanceof ApiError && error.status === 403 && error.message === 'Esta acción requiere permisos de administrador'
+  );
+}

@@ -7,6 +7,8 @@ import type {
   ProductSource,
   ProductUnit,
   RewardType,
+  SubscriptionPlan,
+  SubscriptionStatus,
   TransactionStatus,
 } from '@localnow/shared';
 
@@ -67,6 +69,11 @@ export interface Coupon {
   currentRedemptions: number;
   status: CouponStatus;
   createdAt: string;
+}
+
+// Réplica de AdminCouponResult (packages/api/src/coupons/types.ts).
+export interface AdminCoupon extends Coupon {
+  commerceName: string;
 }
 
 // Réplica de TicketItemResult/TicketResult/TicketSummaryResult (packages/api/src/transactions/types.ts).
@@ -170,4 +177,107 @@ export interface Product {
   active: boolean;
   source: ProductSource;
   createdAt: string;
+}
+
+// Réplica de NewsSourceResult (packages/api/src/news/types.ts).
+export interface NewsSource {
+  id: string;
+  cityId: string;
+  name: string;
+  url: string;
+  feedUrl: string | null;
+  category: NewsCategory | null;
+  active: boolean;
+  lastFetchedAt: string | null;
+  createdAt: string;
+}
+
+// Réplica de AdminCommerceResult (packages/api/src/commerce/types.ts).
+export interface AdminCommerce {
+  id: string;
+  name: string;
+  slug: string;
+  cityId: string;
+  category: CommerceCategory;
+  address: string;
+  lat: number | null;
+  lng: number | null;
+  phone: string | null;
+  email: string;
+  logoUrl: string | null;
+  description: string | null;
+  schedule: Record<string, string> | null;
+  createdAt: string;
+  cif: string;
+  verified: boolean;
+  active: boolean;
+  subscriptionStatus: SubscriptionStatus;
+  subscriptionPlan: SubscriptionPlan | null;
+}
+
+// Réplica de SegmentResult (packages/api/src/segments/types.ts).
+export interface Segment {
+  id: string;
+  cityId: string;
+  name: string;
+  description: string | null;
+  rules: Record<string, unknown>;
+  userCount: number;
+  lastComputedAt: string | null;
+  active: boolean;
+  createdAt: string;
+}
+
+// Réplica de PromotionResult (packages/api/src/promotions/types.ts).
+export interface Promotion {
+  id: string;
+  cityId: string | null;
+  cityName: string | null;
+  name: string;
+  description: string | null;
+  pointsMultiplier: number;
+  startDate: string;
+  endDate: string;
+  active: boolean;
+  createdAt: string;
+}
+
+// Réplica de AdminUserResult (packages/api/src/admin/types.ts).
+export interface AdminUser {
+  id: string;
+  email: string;
+  name: string | null;
+  cityId: string | null;
+  cityName: string | null;
+  pointsGlobalBalance: number;
+  createdAt: string;
+}
+
+// Réplica de CityResult (packages/api/src/admin/types.ts).
+export interface City {
+  id: string;
+  name: string;
+  slug: string;
+  active: boolean;
+  pointsRatioGlobal: number;
+}
+
+// Réplica de PlatformConfigResult (packages/api/src/admin/types.ts).
+export interface PlatformConfig {
+  qrExpiryMinutes: number;
+}
+
+// Réplica de GlobalAnalyticsResult (packages/api/src/admin/types.ts).
+export interface GlobalAnalytics {
+  cities: { total: number; active: number };
+  commerces: { total: number; active: number; pending: number };
+  users: { total: number };
+  transactions: {
+    totalConfirmed: number;
+    totalRevenue: number;
+    today: { count: number; totalAmount: number };
+  };
+  points: { totalGlobalIssued: number; totalGlobalRedeemed: number };
+  coupons: { total: number; active: number; totalRedemptions: number };
+  campaigns: { total: number; active: number; totalImpressions: number };
 }

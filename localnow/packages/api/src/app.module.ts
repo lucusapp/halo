@@ -10,6 +10,7 @@ import { NewsModule } from './news/news.module';
 import { PointsModule } from './points/points.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProductsModule } from './products/products.module';
+import { PromotionsModule } from './promotions/promotions.module';
 import { QrModule } from './qr/qr.module';
 import { RewardsModule } from './rewards/rewards.module';
 import { SegmentsModule } from './segments/segments.module';
@@ -27,6 +28,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     PointsModule,
     CouponsModule,
     ProductsModule,
+    PromotionsModule,
     RewardsModule,
     CampaignsModule,
     SegmentsModule,

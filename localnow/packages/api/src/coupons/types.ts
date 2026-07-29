@@ -15,6 +15,13 @@ export interface CouponResult {
   createdAt: Date;
 }
 
+// GET /admin/coupons/pending — moderación (§5.3, §9.1): el nombre del comercio no
+// está en CouponResult (el panel del propio comercio ya sabe de quién es), pero
+// admin necesita verlo sin una segunda consulta por cupón.
+export interface AdminCouponResult extends CouponResult {
+  commerceName: string;
+}
+
 // POST /user/coupons/:id/activate (§5.3 paso 4).
 export interface CouponActivationResult {
   redemptionId: string;

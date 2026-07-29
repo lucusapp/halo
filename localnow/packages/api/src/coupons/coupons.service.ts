@@ -10,7 +10,7 @@ import { mirrorEnum } from '../prisma/mirror-enum.util';
 import { QrService } from '../qr/qr.service';
 import { CreateCouponDto } from './dto/create-coupon.dto';
 import { UpdateCouponDto } from './dto/update-coupon.dto';
-import type { CouponActivationResult, CouponResult, UserActiveCouponResult } from './types';
+import type { AdminCouponResult, CouponActivationResult, CouponResult, UserActiveCouponResult } from './types';
 
 @Injectable()
 export class CouponsService {
@@ -36,6 +36,16 @@ export class CouponsService {
       orderBy: { createdAt: 'desc' },
     });
     return coupons.map((coupon) => this.toResult(coupon));
+  }
+
+  // GET /admin/coupons/pending (§5.3, §9.1): moderación, todos los comercios.
+  async findPending(): Promise<AdminCouponResult[]> {
+    const coupons = await this.prisma.coupon.findMany({
+      where: { status: 'PENDING' },
+      include: { commerce: { select: { name: true } } },
+      orderBy: { createdAt: 'asc' },
+    });
+    return coupons.map((coupon) => ({ ...this.toResult(coupon), commerceName: coupon.commerce.name }));
   }
 
   // Queda pendiente de moderación (§5.3 pasos 1-2) — nunca se publica directamente.
@@ -151,7 +161,7 @@ export class CouponsService {
     }
 
     const qrToken = this.qrService.generateToken();
-    const qrExpiresAt = this.qrService.computeExpiry();
+    const qrExpiresAt = await this.qrService.computeExpiry();
 
     const redemption = await this.prisma.couponRedemption.create({
       data: { couponId, userId: user.id, qrToken, qrExpiresAt, status: 'PENDING' },

@@ -12,15 +12,17 @@ import {
 } from '@nestjs/common';
 import { AdminGuard } from '../clerk-auth/admin.guard';
 import { JwtAuthGuard } from '../clerk-auth/jwt-auth.guard';
-import type { OwnCommerceResult } from '../commerce/types';
-import type { CouponResult } from '../coupons/types';
+import type { AdminCommerceResult, OwnCommerceResult } from '../commerce/types';
+import type { AdminCouponResult, CouponResult } from '../coupons/types';
 import { CreateNewsSourceDto } from '../news/dto/create-news-source.dto';
 import { UpdateNewsSourceDto } from '../news/dto/update-news-source.dto';
 import type { NewsArticleResult, NewsSourceResult } from '../news/types';
 import type { SegmentResult } from '../segments/types';
 import { AdminService } from './admin.service';
 import { RecomputeSegmentsDto } from './dto/recompute-segments.dto';
-import type { GlobalAnalyticsResult } from './types';
+import { UpdateCityDto } from './dto/update-city.dto';
+import { UpdateConfigDto } from './dto/update-config.dto';
+import type { AdminUserResult, CityResult, GlobalAnalyticsResult, PlatformConfigResult } from './types';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, AdminGuard)
@@ -32,9 +34,19 @@ export class AdminController {
     return this.adminService.getCommercesPending();
   }
 
+  @Get('commerce')
+  getCommerces(): Promise<AdminCommerceResult[]> {
+    return this.adminService.getCommerces();
+  }
+
   @Put('commerce/:id/approve')
   approveCommerce(@Param('id') id: string): Promise<OwnCommerceResult> {
     return this.adminService.approveCommerce(id);
+  }
+
+  @Get('coupons/pending')
+  getCouponsPending(): Promise<AdminCouponResult[]> {
+    return this.adminService.getCouponsPending();
   }
 
   @Put('coupons/:id/approve')
@@ -76,5 +88,30 @@ export class AdminController {
   @Post('segments/recompute')
   recomputeSegments(@Body() dto: RecomputeSegmentsDto): Promise<SegmentResult[]> {
     return this.adminService.recomputeSegments(dto.cityId);
+  }
+
+  @Get('users')
+  getUsers(): Promise<AdminUserResult[]> {
+    return this.adminService.getUsers();
+  }
+
+  @Get('cities')
+  getCities(): Promise<CityResult[]> {
+    return this.adminService.getCities();
+  }
+
+  @Put('cities/:id')
+  updateCity(@Param('id') id: string, @Body() dto: UpdateCityDto): Promise<CityResult> {
+    return this.adminService.updateCity(id, dto);
+  }
+
+  @Get('config')
+  getConfig(): Promise<PlatformConfigResult> {
+    return this.adminService.getConfig();
+  }
+
+  @Put('config')
+  updateConfig(@Body() dto: UpdateConfigDto): Promise<PlatformConfigResult> {
+    return this.adminService.updateConfig(dto);
   }
 }

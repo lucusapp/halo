@@ -1,12 +1,12 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Commerce as PrismaCommerce, CommerceCategory as PrismaCommerceCategory, Prisma } from '@prisma/client';
-import type { CommerceCategory, CommerceSchedule } from '@localnow/shared';
-import { PrismaService } from '../prisma/prisma.service';
+import type { CommerceCategory, CommerceSchedule, SubscriptionPlan, SubscriptionStatus } from '@localnow/shared';
 import { mirrorEnum } from '../prisma/mirror-enum.util';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateCommerceDto } from './dto/create-commerce.dto';
 import { FindCommerceQueryDto } from './dto/find-commerce-query.dto';
 import { UpdateCommerceDto } from './dto/update-commerce.dto';
-import type { OwnCommerceResult, PublicCommerceResult } from './types';
+import type { AdminCommerceResult, OwnCommerceResult, PublicCommerceResult } from './types';
 
 @Injectable()
 export class CommerceService {
@@ -44,6 +44,17 @@ export class CommerceService {
       orderBy: { createdAt: 'asc' },
     });
     return commerces.map((commerce) => this.toOwnResult(commerce));
+  }
+
+  // GET /admin/commerce: todos los comercios (pendientes y ya aprobados), con el
+  // estado de suscripción que solo interesa a moderación — pendientes primero para
+  // que el panel los destaque arriba sin que el frontend tenga que combinar dos
+  // llamadas.
+  async findAllForAdmin(): Promise<AdminCommerceResult[]> {
+    const commerces = await this.prisma.commerce.findMany({
+      orderBy: [{ active: 'asc' }, { createdAt: 'desc' }],
+    });
+    return commerces.map((commerce) => this.toAdminResult(commerce));
   }
 
   async create(authId: string, dto: CreateCommerceDto): Promise<PrismaCommerce> {
@@ -197,6 +208,14 @@ export class CommerceService {
       cif: commerce.cif,
       verified: commerce.verified,
       active: commerce.active,
+    };
+  }
+
+  private toAdminResult(commerce: PrismaCommerce): AdminCommerceResult {
+    return {
+      ...this.toOwnResult(commerce),
+      subscriptionStatus: mirrorEnum<SubscriptionStatus>(commerce.subscriptionStatus),
+      subscriptionPlan: commerce.subscriptionPlan ? mirrorEnum<SubscriptionPlan>(commerce.subscriptionPlan) : null,
     };
   }
 }

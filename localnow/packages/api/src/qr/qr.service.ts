@@ -28,8 +28,19 @@ export class QrService {
     return randomUUID();
   }
 
-  computeExpiry(minutes: number = QR_EXPIRY_MINUTES): Date {
-    return new Date(Date.now() + minutes * 60_000);
+  // Sin `minutes` explícito, usa el valor configurado en /admin/configuracion
+  // (PlatformConfig, fila única "singleton") — si todavía no existe esa fila
+  // (instalación nueva, sin nadie ha guardado configuración aún), cae al default de
+  // @localnow/shared. `minutes` explícito (p.ej. TRANSACTION_ANONYMOUS_TIMEOUT_MINUTES
+  // en TransactionsService) nunca pasa por aquí, no es configurable desde admin.
+  async computeExpiry(minutes?: number): Promise<Date> {
+    const effectiveMinutes = minutes ?? (await this.getConfiguredQrExpiryMinutes());
+    return new Date(Date.now() + effectiveMinutes * 60_000);
+  }
+
+  private async getConfiguredQrExpiryMinutes(): Promise<number> {
+    const config = await this.prisma.platformConfig.findUnique({ where: { id: 'singleton' } });
+    return config?.qrExpiryMinutes ?? QR_EXPIRY_MINUTES;
   }
 
   // Usado por TransactionsService.confirmSale — el cliente escanea el QR que muestra

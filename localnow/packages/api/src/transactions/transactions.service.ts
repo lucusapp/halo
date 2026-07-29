@@ -64,7 +64,7 @@ export class TransactionsService {
     const totalAmount = round2(items.reduce((sum, item) => sum + item.lineTotal, 0));
 
     const qrToken = this.qrService.generateToken();
-    const qrExpiresAt = this.qrService.computeExpiry(TRANSACTION_ANONYMOUS_TIMEOUT_MINUTES);
+    const qrExpiresAt = await this.qrService.computeExpiry(TRANSACTION_ANONYMOUS_TIMEOUT_MINUTES);
 
     const transaction = await this.prisma.transaction.create({
       data: {

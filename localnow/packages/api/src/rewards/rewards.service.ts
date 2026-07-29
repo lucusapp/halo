@@ -103,7 +103,7 @@ export class RewardsService {
     }
 
     const qrToken = this.qrService.generateToken();
-    const qrExpiresAt = this.qrService.computeExpiry();
+    const qrExpiresAt = await this.qrService.computeExpiry();
 
     const redemption = await this.prisma.rewardRedemption.create({
       data: {

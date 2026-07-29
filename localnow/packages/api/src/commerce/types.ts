@@ -1,4 +1,4 @@
-import type { CommerceCategory, CommerceSchedule } from '@localnow/shared';
+import type { CommerceCategory, CommerceSchedule, SubscriptionPlan, SubscriptionStatus } from '@localnow/shared';
 
 // Perfil público del directorio (§5, §12: GET /commerce, GET /commerce/:id) — nunca
 // incluye authId, cif, datos de suscripción/Stripe ni los flags active/verified
@@ -26,4 +26,12 @@ export interface OwnCommerceResult extends PublicCommerceResult {
   cif: string;
   verified: boolean;
   active: boolean;
+}
+
+// Vista de administración (GET /admin/commerce, GET /admin/commerce/pending): lo
+// mismo que ve el propio dueño más el estado de suscripción, que solo interesa a
+// moderación/facturación, no al dueño gestionando su perfil.
+export interface AdminCommerceResult extends OwnCommerceResult {
+  subscriptionStatus: SubscriptionStatus;
+  subscriptionPlan: SubscriptionPlan | null;
 }

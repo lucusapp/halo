@@ -3,7 +3,13 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 // Los grupos de rutas (user) y (panel) no aparecen en la URL, así que se protege por
 // path real, no por carpeta. Panel de comercio en /panel (no /dashboard ni /pos, que
 // habrían colisionado con (user)/dashboard — ver PROYECTO.md §18).
-const isProtectedRoute = createRouteMatcher(['/dashboard(.*)', '/tickets(.*)', '/puntos(.*)', '/panel(.*)']);
+const isProtectedRoute = createRouteMatcher([
+  '/dashboard(.*)',
+  '/tickets(.*)',
+  '/puntos(.*)',
+  '/panel(.*)',
+  '/admin(.*)',
+]);
 
 export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
