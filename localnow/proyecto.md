@@ -473,6 +473,15 @@ NEWS_ARTICLE
   id, source_id (FK), city_id (FK), title, summary,
   url, image_url, category, published_at, fetched_at,
   featured (bool)
+
+PLATFORM_CONFIG
+  id (fijo "singleton" — fila única, sin paginación),
+  qr_expiry_minutes, updated_at
+
+PLATFORM_PROMOTION
+  id, city_id (FK, nullable — null = todas las ciudades),
+  name, description, points_multiplier,
+  start_date, end_date, active, created_at, updated_at
 ```
 
 ---
@@ -540,8 +549,19 @@ GET    /panel/analytics/campaigns
 ```
 GET    /admin/cities
 POST   /admin/cities
+PUT    /admin/cities/:id             → editar ratio de puntos global de la ciudad
+GET    /admin/commerce               → lista completa, pendientes primero
 GET    /admin/commerce/pending
 PUT    /admin/commerce/:id/approve
+GET    /admin/coupons/pending
+PUT    /admin/coupons/:id/approve
+GET    /admin/users                  → listado con ciudad y saldo de puntos globales
+GET    /admin/promotions
+POST   /admin/promotions
+PUT    /admin/promotions/:id
+DELETE /admin/promotions/:id
+GET    /admin/config                 → ajustes globales (qr_expiry_minutes)
+PUT    /admin/config
 GET    /admin/segments
 POST   /admin/segments/recompute
 GET    /admin/analytics/global
@@ -744,6 +764,10 @@ Avisos y decisiones puntuales surgidas durante la implementación, pendientes de
   - `NEXT_PUBLIC_CLERK_SIGN_IN_URL`/`SIGN_UP_URL`/`AFTER_SIGN_IN_URL`/`AFTER_SIGN_UP_URL` en `.env.local` van con el prefijo puesto a mano (`/proxy/<puerto>/login`, etc.) — Next.js no interpola `${BASE_PATH}` dentro de `.env`, así que si `BASE_PATH` cambia hay que actualizar estas 4 líneas también.
   - **Limitación conocida, sin arreglo por configuración**: Clerk (instancia de desarrollo, dominio `*.clerk.accounts.dev`) hace un "handshake" de cookies entre dominios la primera vez que el navegador no tiene la cookie `__clerk_db_jwt` (`__clerk_hs_reason=dev-browser-missing`) — típicamente tras cerrar sesión, en navegación privada, o al borrar cookies. La URL de retorno de ese handshake la construye Clerk a partir del host/path de la petición entrante, que ya no lleva el prefijo del proxy (lo quitó el proxy antes de llegar a Next) — así que el handshake rebota a la raíz del proxy (el propio VS Code Server) en vez de a la app. Revisado sin éxito: `proxyUrl` de Clerk (es para otra cosa, proxear su Frontend API, no la app propia), cabeceras `X-Forwarded-*` (el proxy no las envía). **Mitigación aceptada**: mientras la cookie de dev-browser siga viva, el login funciona bien; si se pierde, hay que volver a entrar pegando a mano la URL completa con el prefijo (`/proxy/<puerto>/login`). Para probar el backend de forma fiable sin depender de este ciclo, generar un JWT real vía `clerkClient.sessions.createSession()` + `getToken()` (Backend API) en un script puntual, sin pasar por el navegador.
 
+- **Tiempo de expiración del QR de cupones/recompensas, ahora editable.** Antes era la constante fija `QR_EXPIRY_MINUTES` (`@localnow/shared`, 15 min). Ahora vive en `PlatformConfig` (tabla en BD, fila única `id="singleton"`) y se edita desde `/admin/configuracion` (`GET`/`PUT /admin/config`). `QrService.computeExpiry()` pasó a ser `async`: sin un valor explícito, lee `PlatformConfig.qrExpiryMinutes`; si esa fila todavía no existe (instalación nueva, nadie ha guardado configuración todavía), cae al valor de `@localnow/shared#QR_EXPIRY_MINUTES` como default.
+
+- **El QR de venta (ticket) es independiente y NO pasa por esa configuración.** `TransactionsService.createSale` sigue usando su propia constante `TRANSACTION_ANONYMOUS_TIMEOUT_MINUTES` (5 min, §13.1 paso 13), pasada explícitamente a `computeExpiry(minutes)` — un valor explícito nunca consulta `PlatformConfig`. Solo los QR de activación de cupón (`CouponsService.activate`) y de canje de recompensa (`RewardsService.redeem`), que llaman a `computeExpiry()` sin argumento, usan el valor configurable desde admin.
+
 ---
 
 ## 19. Categorías definitivas y mapeo editorial-comercio
@@ -782,5 +806,5 @@ El artículo publicado es propiedad de LocalNow, no copia del original.
 ---
 
 *Documento generado el 20/06/2026. Versión 1.0.*
-*Última actualización: 29/07/2026 — categorías definitivas y mapeo editorial-comercio (§19); §4.2 y §5.2 actualizadas al mismo espacio de categorías.*
+*Última actualización: 29/07/2026 — PlatformConfig/PlatformPromotion (§11), endpoints de admin nuevos (§12) y QR expiry editable (§18), tras el dashboard de administración.*
 *Actualizar este documento cada vez que se tome una decisión de producto o arquitectura relevante.*
