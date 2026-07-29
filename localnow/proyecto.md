@@ -61,7 +61,9 @@ El **toque diferencial y el modelo de negocio principal** es el sistema de datos
 ## 4. Ámbito 1 — Revista de noticias
 
 ### 4.1 Concepto editorial
-La revista funciona como un agregador dinámico de fuentes locales. Las noticias se presentan en una cuadrícula tipo Flipboard donde las tarjetas tienen distintos tamaños según su relevancia (hero card, tarjeta doble, tarjeta wide, tarjeta estándar).
+La revista funciona como un agregador dinámico de fuentes locales, con navegación en dos niveles tipo Flipboard:
+- **Portada (`/`)**: cuadrícula de tarjetas grandes, una por categoría, con el titular y foto más recientes de esa categoría como portada de revista (fondo a toda tarjeta — foto con degradado si hay imagen, color sólido de la categoría si no). Las categorías sin artículos todavía no se muestran.
+- **Feed de categoría (`/?category=`)**: al pulsar una tarjeta, el feed completo de esa categoría — ahí sí con tarjetas de distintos tamaños según relevancia (hero card, tarjeta doble, tarjeta wide, tarjeta estándar), pills para saltar a otra categoría, y paginación.
 
 ### 4.2 Categorías de noticias
 Categorías definitivas — ver §19 para el detalle de vinculación editorial-comercio de cada una.

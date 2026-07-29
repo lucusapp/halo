@@ -1,5 +1,7 @@
+import Link from 'next/link';
 import { NEWS_CATEGORIES } from '@localnow/shared';
 import { apiFetch } from '@/lib/api';
+import { withBasePath } from '@/lib/base-path';
 import { segmentNewsArticles } from '@/lib/news-layout';
 import type { PaginatedNewsArticles } from '@/lib/types';
 import { CategoryPills } from '@/components/ui/category-pills';
@@ -7,15 +9,31 @@ import { Pagination } from '@/components/ui/pagination';
 import { NewsHeroCard } from '@/components/news/news-hero-card';
 import { NewsCard } from '@/components/news/news-card';
 import { NewsCardWide } from '@/components/news/news-card-wide';
+import { CategoryTilesGrid } from '@/components/news/category-tiles-grid';
 
 interface HomePageProps {
   searchParams: { city?: string; category?: string; page?: string };
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
+  // Portada = cuadrícula de categorías, tipo Flipboard (una tarjeta grande por
+  // categoría con su último titular). Pulsar una categoría lleva a su propio feed
+  // (misma ruta, con ?category= — evita duplicar el hero/grid/paginación que ya
+  // existían para eso).
+  if (!searchParams.category) {
+    return (
+      <main className="flex flex-col gap-6">
+        <h1 className="font-serif text-2xl font-bold text-gray-900">Portada</h1>
+        <CategoryTilesGrid city={searchParams.city} />
+      </main>
+    );
+  }
+
+  const categoryLabel = NEWS_CATEGORIES.find((category) => category.value === searchParams.category)?.label;
+
   const query = new URLSearchParams();
   if (searchParams.city) query.set('city', searchParams.city);
-  if (searchParams.category) query.set('category', searchParams.category);
+  query.set('category', searchParams.category);
   if (searchParams.page) query.set('page', searchParams.page);
 
   const data = await apiFetch<PaginatedNewsArticles>(`/news?${query.toString()}`);
@@ -29,10 +47,17 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   return (
     <main className="flex flex-col gap-6">
+      <div className="flex flex-col gap-2">
+        <Link href={withBasePath('/')} className="w-fit text-sm text-gray-500 hover:underline">
+          ← Todas las categorías
+        </Link>
+        <h1 className="font-serif text-2xl font-bold text-gray-900">{categoryLabel ?? searchParams.category}</h1>
+      </div>
+
       <CategoryPills categories={NEWS_CATEGORIES} activeValue={searchParams.category} basePath="/" />
 
       {!hero ? (
-        <p className="py-12 text-center text-gray-500">Todavía no hay noticias publicadas.</p>
+        <p className="py-12 text-center text-gray-500">Todavía no hay noticias en esta categoría.</p>
       ) : (
         <>
           <NewsHeroCard article={hero} city={searchParams.city} />

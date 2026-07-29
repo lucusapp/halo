@@ -21,6 +21,27 @@ export const NEWS_CATEGORY_COLORS: Record<NewsCategory, string> = {
   SOCIEDAD: 'bg-violet-100 text-violet-700',
 };
 
+// Versión saturada (fondo sólido + texto blanco) de la misma familia de color, para
+// las tarjetas grandes de categoría en la home (estilo Flipboard: fondo a toda
+// tarjeta, no un pill) cuando la categoría no tiene foto de portada disponible.
+export const NEWS_CATEGORY_TILE_COLORS: Record<NewsCategory, string> = {
+  MUNICIPIO: 'bg-blue-700',
+  DEPORTES: 'bg-green-700',
+  ECONOMIA: 'bg-amber-700',
+  GASTRONOMIA: 'bg-orange-700',
+  HOGAR_DECORACION: 'bg-lime-700',
+  SALUD_BIENESTAR: 'bg-rose-700',
+  CULTURA_OCIO: 'bg-purple-700',
+  EDUCACION: 'bg-cyan-700',
+  TECNOLOGIA: 'bg-indigo-700',
+  MODA_BELLEZA: 'bg-pink-700',
+  MOTOR: 'bg-slate-700',
+  MASCOTAS: 'bg-yellow-700',
+  INMOBILIARIA: 'bg-teal-700',
+  JUDICIAL: 'bg-red-700',
+  SOCIEDAD: 'bg-violet-700',
+};
+
 export const COMMERCE_CATEGORY_COLORS: Record<CommerceCategory, string> = {
   DEPORTES: 'bg-green-100 text-green-700',
   ECONOMIA: 'bg-amber-100 text-amber-700',
