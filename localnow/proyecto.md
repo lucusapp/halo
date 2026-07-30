@@ -353,6 +353,41 @@ Vista simplificada (tablet o móvil en el mostrador) con:
 - Vista de validación de QR (para cupones y canjes de puntos que trae el cliente)
 - Historial de ventas del día
 
+### 9.4 Captación de leads y alta asistida
+
+El flujo de 9.1 asume que el comercio ya quiere registrarse y rellena el formulario
+completo (CIF incluido) por su cuenta. Antes de llegar ahí hace falta captar el
+interés y, en muchos casos, dar de alta el perfil por él — así nace el sistema de
+captación de leads, en 3 niveles. Solo el **nivel 1** está implementado; 2 y 3 están
+por definir.
+
+**Nivel 1 — Captación de interés (implementado):**
+1. Botón "Quiero estar en LocalNow" visible en el pie del directorio (`/comercios`)
+   y al pie de cada tarjeta de noticia, junto a "Negocios relacionados". Abre un
+   modal con un formulario mínimo: nombre, negocio, teléfono, email, ciudad,
+   mensaje opcional.
+2. `POST /leads` (público, sin auth) guarda el lead con `status: NEW` — modelo
+   `CommerceLead`, independiente de `Commerce` (todavía no es un comercio, solo
+   interés expresado).
+3. `/admin/leads`: lista de leads ordenados por fecha, con su estado
+   (`NEW`/`CONTACTED`/`CONVERTED`/`DISMISSED`) editable desde el propio listado.
+4. **"Convertir en comercio"**, en dos pasos:
+   - El admin introduce la URL del negocio (web, ficha de Google, redes…) y el
+     sistema hace scraping best-effort con `cheerio` (metaetiquetas Open Graph +
+     heurísticas de texto para teléfono/dirección): nombre, descripción, teléfono,
+     dirección, foto principal.
+   - El admin revisa y corrige lo escaneado (nunca se confirma a ciegas — un
+     scrape puede fallar o traer datos incorrectos) y confirma. El sistema crea el
+     comercio directamente, ya `active: true` y `verified: true` (el propio admin
+     es quien modera, no tiene sentido pasarlo por la cola de aprobación de 9.1) —
+     **sin que el comerciante tenga que hacer nada**.
+   - Esto exige que `Commerce.authId` y `Commerce.cif` sean nullable: un comercio
+     nacido así no tiene todavía cuenta Clerk propia (nadie lo ha reclamado) ni CIF
+     verificado. Reclamar/vincular una cuenta a un comercio ya existente queda
+     fuera de alcance por ahora.
+
+**Niveles 2 y 3 — por definir.**
+
 ---
 
 ## 10. Roles de usuario

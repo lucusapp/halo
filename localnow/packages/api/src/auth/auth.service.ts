@@ -66,7 +66,7 @@ export class AuthService {
   // no tiene sentido duplicar esa lógica aquí.
   async registerCommerce(claims: ClerkJwtClaims, dto: CreateCommerceDto): Promise<AuthCommerceResult> {
     const commerce = await this.commerceService.create(claims.sub, dto);
-    return this.toCommerceResult(commerce);
+    return this.toCommerceResult(commerce, claims.sub);
   }
 
   // Cliente ya autenticado con Clerk que llama a nuestra API por primera vez: si no
@@ -109,7 +109,7 @@ export class AuthService {
 
     const commerce = await this.prisma.commerce.findUnique({ where: { authId } });
     if (commerce) {
-      return this.toCommerceResult(commerce);
+      return this.toCommerceResult(commerce, authId);
     }
 
     const existingUser = await this.prisma.user.findUnique({
@@ -172,11 +172,15 @@ export class AuthService {
     };
   }
 
-  private toCommerceResult(commerce: PrismaCommerce): AuthCommerceResult {
+  // authId se pasa explícito en vez de leer commerce.authId (nullable desde §9.4:
+  // un comercio dado de alta por un admin desde un lead nace sin cuenta todavía) —
+  // aquí siempre es no-nulo por construcción, ambos llamadores lo obtienen del JWT
+  // ya verificado que se usó para encontrar/crear este mismo comercio.
+  private toCommerceResult(commerce: PrismaCommerce, authId: string): AuthCommerceResult {
     return {
       role: 'commerce',
       id: commerce.id,
-      authId: commerce.authId,
+      authId,
       email: commerce.email,
       name: commerce.name,
       verified: commerce.verified,

@@ -6,7 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateCommerceDto } from './dto/create-commerce.dto';
 import { FindCommerceQueryDto } from './dto/find-commerce-query.dto';
 import { UpdateCommerceDto } from './dto/update-commerce.dto';
-import type { AdminCommerceResult, OwnCommerceResult, PublicCommerceResult } from './types';
+import type { AdminCommerceResult, CreateCommerceFromLeadInput, OwnCommerceResult, PublicCommerceResult } from './types';
 
 @Injectable()
 export class CommerceService {
@@ -88,6 +88,38 @@ export class CommerceService {
           // en el registro, sin importar lo que llegue en el body.
           active: false,
           verified: false,
+        },
+      });
+    } catch (error) {
+      this.handleUniqueConstraintError(error, 'comercio');
+    }
+  }
+
+  // Alta directa por un admin a partir de un lead convertido (§9.4, nivel 1) — sin
+  // cuenta Clerk (authId null) ni CIF verificado (cif null) todavía, a diferencia de
+  // create(). El propio admin está dando de alta el comercio, así que nace ya
+  // activo y verificado: no tiene sentido pasarlo por la cola de aprobación de la
+  // que él mismo es quien modera.
+  async createFromLead(dto: CreateCommerceFromLeadInput): Promise<PrismaCommerce> {
+    await this.assertCityExists(dto.cityId);
+    const slug = await this.generateUniqueSlug(dto.name);
+
+    try {
+      return await this.prisma.commerce.create({
+        data: {
+          authId: null,
+          cif: null,
+          name: dto.name,
+          slug,
+          cityId: dto.cityId,
+          category: mirrorEnum<PrismaCommerceCategory>(dto.category),
+          address: dto.address,
+          phone: dto.phone ?? null,
+          email: dto.email,
+          logoUrl: dto.imageUrl ?? null,
+          description: dto.description ?? null,
+          active: true,
+          verified: true,
         },
       });
     } catch (error) {

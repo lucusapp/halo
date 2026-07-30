@@ -6,6 +6,7 @@ import { withBasePath } from '@/lib/base-path';
 const NAV_ITEMS = [
   { href: '/admin', label: 'Visión general' },
   { href: '/admin/comercios', label: 'Comercios' },
+  { href: '/admin/leads', label: 'Leads' },
   { href: '/admin/noticias', label: 'Noticias' },
   { href: '/admin/cupones', label: 'Cupones' },
   { href: '/admin/segmentos', label: 'Segmentos' },

@@ -2,6 +2,7 @@ import { NEWS_CATEGORIES } from '@localnow/shared';
 import { NEWS_CATEGORY_COLORS } from '@/lib/category-colors';
 import { formatRelativeTime } from '@/lib/format';
 import type { NewsArticle } from '@/lib/types';
+import { BecomeCommerceButton } from '@/components/leads/become-commerce-button';
 import { RelatedCommerces } from './related-commerces';
 
 // Sin imagen, ancho completo — la tipografía editorial (título grande en serif)
@@ -34,6 +35,9 @@ export function NewsCardWide({ article, city }: { article: NewsArticle; city?: s
         <span className="shrink-0 text-xs text-gray-400">{formatRelativeTime(article.publishedAt)}</span>
       </a>
       <RelatedCommerces category={article.category} city={city} />
+      <div className="border-t border-gray-100 px-5 py-3">
+        <BecomeCommerceButton className="text-xs text-gray-400 hover:text-gray-600 hover:underline" defaultCity={city} />
+      </div>
     </article>
   );
 }

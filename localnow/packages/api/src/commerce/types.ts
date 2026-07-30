@@ -22,8 +22,10 @@ export interface PublicCommerceResult {
 
 // Vista del propio comercio sobre su perfil (crear/editar): añade lo que solo le
 // interesa al dueño — su CIF y el estado de verificación/visibilidad (§9.1).
+// cif es nullable desde §9.4: un comercio dado de alta por un admin a partir de un
+// lead nace sin CIF verificado todavía.
 export interface OwnCommerceResult extends PublicCommerceResult {
-  cif: string;
+  cif: string | null;
   verified: boolean;
   active: boolean;
 }
@@ -34,4 +36,19 @@ export interface OwnCommerceResult extends PublicCommerceResult {
 export interface AdminCommerceResult extends OwnCommerceResult {
   subscriptionStatus: SubscriptionStatus;
   subscriptionPlan: SubscriptionPlan | null;
+}
+
+// Entrada de CommerceService.createFromLead (§9.4) — deliberadamente su propio tipo
+// en vez de importar ConvertLeadDto del módulo leads: evita que commerce dependa de
+// leads (es leads quien depende de commerce, no al revés). ConvertLeadDto cumple
+// esta forma por estructura, no hace falta que la implemente explícitamente.
+export interface CreateCommerceFromLeadInput {
+  name: string;
+  description?: string;
+  phone?: string;
+  address: string;
+  email: string;
+  imageUrl?: string;
+  category: CommerceCategory;
+  cityId: string;
 }

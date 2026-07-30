@@ -146,6 +146,14 @@ enum AdminRole {
   MODERATOR
 }
 
+// Captación de leads de comercio, nivel 1 (§9.4)
+enum LeadStatus {
+  NEW
+  CONTACTED
+  CONVERTED
+  DISMISSED
+}
+
 // ────────────────────────────────────────────────────────────────
 // Ciudades
 // ────────────────────────────────────────────────────────────────
@@ -228,17 +236,22 @@ model UserPointsGlobal {
 // ────────────────────────────────────────────────────────────────
 
 model Commerce {
-  id     String @id @default(cuid())
-  authId String @unique
+  id     String  @id @default(cuid())
+  // Nullable: un comercio dado de alta por un admin desde un lead (§9.4) nace sin
+  // cuenta Clerk propia todavía — nadie lo ha reclamado. Se rellena en cuanto el
+  // dueño se registra y lo vincula (fuera de alcance por ahora: solo la creación).
+  authId String? @unique
   name   String
-  slug   String @unique
+  slug   String  @unique
 
   cityId String
   city   City   @relation(fields: [cityId], references: [id])
 
   category CommerceCategory
 
-  cif     String  @unique
+  // Nullable por el mismo motivo que authId: el scraping no puede obtener un CIF
+  // real, y verified ya distingue "solicitado por email" de "CIF confirmado" (§9.1).
+  cif     String? @unique
   address String
   lat     Float?
   lng     Float?
@@ -745,4 +758,25 @@ model PlatformPromotion {
 
   @@index([cityId])
   @@map("platform_promotions")
+}
+
+// Captación de leads de comercio, nivel 1 (PROYECTO.md §9.4): "quiero estar en
+// LocalNow" desde el directorio o el pie de una tarjeta de noticia. `city` es texto
+// libre (quien rellena el formulario no conoce nuestro id de ciudad) — no una FK, a
+// diferencia de Commerce.cityId, que sí exige una ciudad real ya dada de alta.
+model CommerceLead {
+  id           String     @id @default(cuid())
+  name         String
+  businessName String
+  phone        String
+  email        String
+  message      String?
+  city         String
+  status       LeadStatus @default(NEW)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@map("commerce_leads")
 }

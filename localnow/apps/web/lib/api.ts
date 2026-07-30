@@ -36,3 +36,18 @@ export async function apiFetch<T>(path: string): Promise<T> {
   }
   return response.json() as Promise<T>;
 }
+
+// POST público sin auth (p.ej. POST /leads, el formulario "Quiero estar en
+// LocalNow") — nunca cacheado, a diferencia de apiFetch.
+export async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetch(`${API_URL}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    cache: 'no-store',
+  });
+  if (!response.ok) {
+    throw new ApiError(response.status, await parseErrorMessage(response));
+  }
+  return response.json() as Promise<T>;
+}

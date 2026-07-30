@@ -2,6 +2,7 @@ import type {
   CommerceCategory,
   CouponStatus,
   CouponType,
+  LeadStatus,
   NewsCategory,
   PaymentMethod,
   ProductSource,
@@ -287,4 +288,27 @@ export interface PublicCity {
   id: string;
   name: string;
   slug: string;
+}
+
+// Réplica de LeadResult (packages/api/src/leads/types.ts).
+export interface Lead {
+  id: string;
+  name: string;
+  businessName: string;
+  phone: string;
+  email: string;
+  message: string | null;
+  city: string;
+  status: LeadStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Réplica de ScrapedBusinessResult (packages/api/src/leads/types.ts).
+export interface ScrapedBusiness {
+  name: string | null;
+  description: string | null;
+  phone: string | null;
+  address: string | null;
+  imageUrl: string | null;
 }

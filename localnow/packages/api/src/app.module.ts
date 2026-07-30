@@ -7,6 +7,7 @@ import { CampaignsModule } from './campaigns/campaigns.module';
 import { CitiesModule } from './cities/cities.module';
 import { CommerceModule } from './commerce/commerce.module';
 import { CouponsModule } from './coupons/coupons.module';
+import { LeadsModule } from './leads/leads.module';
 import { NewsModule } from './news/news.module';
 import { PointsModule } from './points/points.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -29,6 +30,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     TransactionsModule,
     PointsModule,
     CouponsModule,
+    LeadsModule,
     ProductsModule,
     PromotionsModule,
     RewardsModule,

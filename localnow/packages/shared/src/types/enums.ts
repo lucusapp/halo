@@ -128,3 +128,11 @@ export enum AdminRole {
   SUPER_ADMIN = 'SUPER_ADMIN',
   MODERATOR = 'MODERATOR',
 }
+
+// Captación de leads de comercio, nivel 1 (PROYECTO.md §9.4)
+export enum LeadStatus {
+  NEW = 'NEW',
+  CONTACTED = 'CONTACTED',
+  CONVERTED = 'CONVERTED',
+  DISMISSED = 'DISMISSED',
+}

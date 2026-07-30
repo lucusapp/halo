@@ -2,6 +2,7 @@ import { NEWS_CATEGORIES } from '@localnow/shared';
 import { NEWS_CATEGORY_COLORS } from '@/lib/category-colors';
 import { formatRelativeTime } from '@/lib/format';
 import type { NewsArticle } from '@/lib/types';
+import { BecomeCommerceButton } from '@/components/leads/become-commerce-button';
 import { NewsImage } from './news-image';
 import { RelatedCommerces } from './related-commerces';
 
@@ -33,6 +34,9 @@ export function NewsCard({ article, city }: { article: NewsArticle; city?: strin
         </div>
       </a>
       <RelatedCommerces category={article.category} city={city} />
+      <div className="border-t border-gray-100 px-4 py-2">
+        <BecomeCommerceButton className="text-xs text-gray-400 hover:text-gray-600 hover:underline" defaultCity={city} />
+      </div>
     </article>
   );
 }
