@@ -22,6 +22,11 @@ const nextConfig = {
       { protocol: 'https', hostname: 'estaticos-cdn.prensaiberica.es' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
+    // OJO: assetPrefix NO prefija el endpoint de optimización de next/image
+    // (/_next/image) — es una config aparte. Sin esto, en el entorno con proxy las
+    // <Image> pedían /_next/image?... sin el prefijo /proxy/<puerto> y el proxy no
+    // sabía dónde enrutarlas (404 silencioso: la imagen simplemente no cargaba).
+    path: `${assetPrefix}/_next/image`,
   },
 };
 
