@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { withBasePath } from '@/lib/base-path';
 
 export function Pagination({
   page,
@@ -20,7 +19,7 @@ export function Pagination({
       if (value && key !== 'page') params.set(key, value);
     }
     params.set('page', String(target));
-    return withBasePath(`${basePath}?${params.toString()}`);
+    return `${basePath}?${params.toString()}`;
   }
 
   return (

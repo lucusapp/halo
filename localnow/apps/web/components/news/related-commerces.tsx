@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { COMMERCE_CATEGORIES, NEWS_TO_COMMERCE_CATEGORY, type NewsCategory } from '@localnow/shared';
 import { apiFetch } from '@/lib/api';
-import { withBasePath } from '@/lib/base-path';
 import type { PublicCommerce } from '@/lib/types';
 
 // PROYECTO.md §19.2: cada tarjeta de noticia lleva al pie 2-3 comercios locales de
@@ -28,7 +27,7 @@ export async function RelatedCommerces({ category, city }: { category: NewsCateg
         {related.map((commerce) => (
           <Link
             key={commerce.id}
-            href={withBasePath(`/comercios/${commerce.id}`)}
+            href={`/comercios/${commerce.id}`}
             className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-gray-50"
           >
             {commerce.logoUrl ? (

@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { COMMERCE_CATEGORIES } from '@localnow/shared';
 import { COMMERCE_CATEGORY_COLORS } from '@/lib/category-colors';
-import { withBasePath } from '@/lib/base-path';
 import type { PublicCommerce } from '@/lib/types';
 
 export function CommerceCard({ commerce }: { commerce: PublicCommerce }) {
@@ -10,7 +9,7 @@ export function CommerceCard({ commerce }: { commerce: PublicCommerce }) {
 
   return (
     <Link
-      href={withBasePath(`/comercios/${commerce.id}`)}
+      href={`/comercios/${commerce.id}`}
       className="flex flex-col overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200 transition-shadow hover:shadow-md"
     >
       {commerce.logoUrl ? (

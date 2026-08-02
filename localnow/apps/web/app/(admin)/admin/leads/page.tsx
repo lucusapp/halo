@@ -1,6 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { withBasePath } from '@/lib/base-path';
 import { authFetch, isNotAdmin } from '@/lib/auth-api';
 import type { City, Lead } from '@/lib/types';
 import { NotAdminNotice } from '../../not-admin-notice';
@@ -9,7 +8,7 @@ import { LeadRow } from './lead-row';
 export default async function AdminLeadsPage() {
   const { userId } = await auth();
   if (!userId) {
-    redirect(withBasePath('/login'));
+    redirect('/login');
   }
 
   let leads: Lead[];

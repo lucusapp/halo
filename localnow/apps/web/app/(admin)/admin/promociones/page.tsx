@@ -1,6 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { withBasePath } from '@/lib/base-path';
 import { authFetch, isNotAdmin } from '@/lib/auth-api';
 import type { City, Promotion } from '@/lib/types';
 import { NotAdminNotice } from '../../not-admin-notice';
@@ -10,7 +9,7 @@ import { PromotionRow } from './promotion-row';
 export default async function AdminPromocionesPage() {
   const { userId } = await auth();
   if (!userId) {
-    redirect(withBasePath('/login'));
+    redirect('/login');
   }
 
   let promotions: Promotion[];

@@ -1,6 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
 import { notFound, redirect } from 'next/navigation';
-import { withBasePath } from '@/lib/base-path';
 import { ApiError } from '@/lib/api';
 import { authFetch } from '@/lib/auth-api';
 import type { Ticket } from '@/lib/types';
@@ -8,7 +7,7 @@ import type { Ticket } from '@/lib/types';
 export default async function TicketDetailPage({ params }: { params: { id: string } }) {
   const { userId } = await auth();
   if (!userId) {
-    redirect(withBasePath('/login'));
+    redirect('/login');
   }
 
   let ticket: Ticket;

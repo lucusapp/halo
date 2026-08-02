@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { NEWS_CATEGORIES } from '@localnow/shared';
 import { apiFetch } from '@/lib/api';
-import { withBasePath } from '@/lib/base-path';
 import { segmentNewsArticles } from '@/lib/news-layout';
 import type { PaginatedNewsArticles } from '@/lib/types';
 import { CategoryPills } from '@/components/ui/category-pills';
@@ -48,7 +47,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <main className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <Link href={withBasePath('/')} className="w-fit text-sm text-gray-500 hover:underline">
+        <Link href={'/'} className="w-fit text-sm text-gray-500 hover:underline">
           ← Todas las categorías
         </Link>
         <h1 className="font-serif text-2xl font-bold text-gray-900">{categoryLabel ?? searchParams.category}</h1>

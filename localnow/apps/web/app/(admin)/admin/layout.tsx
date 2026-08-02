@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { SignOutButton } from '@clerk/nextjs';
-import { withBasePath } from '@/lib/base-path';
 
 const NAV_ITEMS = [
   { href: '/admin', label: 'Visión general' },
@@ -23,10 +22,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-950 md:flex-row">
       <aside className="border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 md:w-56 md:shrink-0 md:border-b-0 md:border-r">
         <div className="flex items-center justify-between px-4 py-3 md:flex-col md:items-start md:gap-4">
-          <Link href={withBasePath('/admin')} className="text-lg font-bold text-gray-900 dark:text-gray-100">
+          <Link href={'/admin'} className="text-lg font-bold text-gray-900 dark:text-gray-100">
             LocalNow Admin
           </Link>
-          <SignOutButton redirectUrl={withBasePath('/login')}>
+          <SignOutButton redirectUrl={'/login'}>
             <button type="button" className="text-sm text-gray-400 hover:underline md:hidden">
               Salir
             </button>
@@ -36,7 +35,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.href}
-              href={withBasePath(item.href)}
+              href={item.href}
               className="whitespace-nowrap rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               {item.label}
@@ -44,7 +43,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className="hidden px-4 pb-4 md:block">
-          <SignOutButton redirectUrl={withBasePath('/login')}>
+          <SignOutButton redirectUrl={'/login'}>
             <button type="button" className="text-sm text-gray-400 hover:underline">
               Salir
             </button>

@@ -1,6 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { withBasePath } from '@/lib/base-path';
 import { authFetch, isUserNotRegistered } from '@/lib/auth-api';
 import type { TicketSummary } from '@/lib/types';
 import { CompleteRegistrationForm } from '../complete-registration-form';
@@ -9,7 +8,7 @@ import { TicketSummaryRow } from '@/components/tickets/ticket-summary-row';
 export default async function TicketsPage() {
   const { userId } = await auth();
   if (!userId) {
-    redirect(withBasePath('/login'));
+    redirect('/login');
   }
 
   let tickets: TicketSummary[];

@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { withBasePath } from '@/lib/base-path';
 import { authFetch, isUserNotRegistered } from '@/lib/auth-api';
 import type { TicketSummary, UserPoints } from '@/lib/types';
 import { CompleteRegistrationForm } from '../complete-registration-form';
@@ -11,7 +10,7 @@ import { TicketSummaryRow } from '@/components/tickets/ticket-summary-row';
 export default async function DashboardPage() {
   const { userId } = await auth();
   if (!userId) {
-    redirect(withBasePath('/login'));
+    redirect('/login');
   }
 
   const user = await currentUser();
@@ -49,7 +48,7 @@ export default async function DashboardPage() {
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-gray-900">Últimos tickets</h2>
-          <Link href={withBasePath('/tickets')} className="text-sm text-gray-500 underline">
+          <Link href={'/tickets'} className="text-sm text-gray-500 underline">
             Ver todos
           </Link>
         </div>

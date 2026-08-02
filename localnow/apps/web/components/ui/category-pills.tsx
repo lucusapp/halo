@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { withBasePath } from '@/lib/base-path';
 
 interface CategoryOption {
   value: string;
@@ -17,13 +16,13 @@ export function CategoryPills({
 }) {
   return (
     <nav className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
-      <Link href={withBasePath(basePath)} className={pillClass(!activeValue)}>
+      <Link href={basePath} className={pillClass(!activeValue)}>
         Todas
       </Link>
       {categories.map((category) => (
         <Link
           key={category.value}
-          href={withBasePath(`${basePath}?category=${category.value}`)}
+          href={`${basePath}?category=${category.value}`}
           className={pillClass(activeValue === category.value)}
         >
           {category.label}

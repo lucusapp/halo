@@ -1,6 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { withBasePath } from '@/lib/base-path';
 import { authFetch, isUserNotRegistered } from '@/lib/auth-api';
 import type { AvailableReward, UserPoints } from '@/lib/types';
 import { CompleteRegistrationForm } from '../complete-registration-form';
@@ -11,7 +10,7 @@ import { RewardCard } from '@/components/points/reward-card';
 export default async function PuntosPage() {
   const { userId } = await auth();
   if (!userId) {
-    redirect(withBasePath('/login'));
+    redirect('/login');
   }
 
   let points: UserPoints;

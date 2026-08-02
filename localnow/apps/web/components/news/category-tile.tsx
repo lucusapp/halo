@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { NEWS_CATEGORY_TILE_COLORS } from '@/lib/category-colors';
-import { withBasePath } from '@/lib/base-path';
 import type { NewsArticle } from '@/lib/types';
 import { NewsImage } from './news-image';
 
@@ -19,7 +18,7 @@ export function CategoryTile({
 }) {
   return (
     <Link
-      href={withBasePath(`/?category=${category}`)}
+      href={`/?category=${category}`}
       className="group relative flex aspect-[4/5] flex-col overflow-hidden rounded-xl shadow-sm transition-transform hover:scale-[1.02]"
     >
       <div className="absolute inset-0">

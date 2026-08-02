@@ -1,6 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { withBasePath } from '@/lib/base-path';
 import { authFetch, isCommerceNotRegistered } from '@/lib/auth-api';
 import type { Product } from '@/lib/types';
 import { CommerceNotRegisteredNotice } from '../../commerce-not-registered-notice';
@@ -10,7 +9,7 @@ import { ProductRow } from './product-row';
 export default async function ProductosPage() {
   const { userId } = await auth();
   if (!userId) {
-    redirect(withBasePath('/login'));
+    redirect('/login');
   }
 
   let products: Product[];

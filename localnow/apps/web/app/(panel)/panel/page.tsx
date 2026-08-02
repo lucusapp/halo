@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { withBasePath } from '@/lib/base-path';
 import { authFetch, isCommerceNotRegistered } from '@/lib/auth-api';
 import type { PanelDashboard } from '@/lib/types';
 import { CommerceNotRegisteredNotice } from '../commerce-not-registered-notice';
@@ -15,7 +14,7 @@ const STATUS_LABELS: Record<string, string> = {
 export default async function PanelDashboardPage() {
   const { userId } = await auth();
   if (!userId) {
-    redirect(withBasePath('/login'));
+    redirect('/login');
   }
 
   let dashboard: PanelDashboard;
@@ -38,7 +37,7 @@ export default async function PanelDashboardPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900">Hoy</h1>
         <Link
-          href={withBasePath('/panel/venta')}
+          href={'/panel/venta'}
           className="rounded-full bg-gray-900 px-4 py-2 text-sm font-medium text-white"
         >
           + Nueva venta

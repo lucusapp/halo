@@ -1,6 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { withBasePath } from '@/lib/base-path';
 import { authFetch, isNotAdmin } from '@/lib/auth-api';
 import type { AdminUser } from '@/lib/types';
 import { NotAdminNotice } from '../../not-admin-notice';
@@ -8,7 +7,7 @@ import { NotAdminNotice } from '../../not-admin-notice';
 export default async function AdminUsuariosPage() {
   const { userId } = await auth();
   if (!userId) {
-    redirect(withBasePath('/login'));
+    redirect('/login');
   }
 
   let users: AdminUser[];

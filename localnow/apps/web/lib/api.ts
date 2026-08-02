@@ -26,7 +26,7 @@ export async function parseErrorMessage(response: Response): Promise<string> {
 }
 
 // Fetch server-side (Server Components) contra packages/api — no pasa por el
-// navegador, así que el proxy de puertos de VS Code Server y CORS no aplican aquí.
+// navegador, así que CORS no aplica aquí.
 // Contenido público (noticias, directorio) cambia con poca frecuencia: revalidar
 // cada minuto evita golpear la API en cada request sin servir algo demasiado viejo.
 export async function apiFetch<T>(path: string): Promise<T> {

@@ -1,6 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { withBasePath } from '@/lib/base-path';
 import { apiFetch } from '@/lib/api';
 import { authFetch, isNotAdmin } from '@/lib/auth-api';
 import type { City, NewsSource, PaginatedNewsArticles } from '@/lib/types';
@@ -12,7 +11,7 @@ import { ArticleRow } from './article-row';
 export default async function AdminNoticiasPage() {
   const { userId } = await auth();
   if (!userId) {
-    redirect(withBasePath('/login'));
+    redirect('/login');
   }
 
   let sources: NewsSource[];

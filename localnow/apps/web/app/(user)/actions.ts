@@ -4,7 +4,6 @@ import { auth } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { API_URL, ApiError, parseErrorMessage } from '@/lib/api';
-import { withBasePath } from '@/lib/base-path';
 
 // Clerk solo garantiza la identidad; el perfil LocalNow (User, con su fila de puntos
 // y el consentimiento RGPD de §14) se crea aparte, vía POST /auth/register/user. No
@@ -14,7 +13,7 @@ export async function completeRegistration(formData: FormData): Promise<void> {
   const { getToken } = await auth();
   const token = await getToken();
   if (!token) {
-    redirect(withBasePath('/login'));
+    redirect('/login');
   }
 
   const consentDataUsage = formData.get('consentDataUsage') === 'on';
