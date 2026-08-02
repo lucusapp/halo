@@ -12,6 +12,9 @@ export default function UserLayout({ children }: { children: ReactNode }) {
             LocalNow
           </Link>
           <nav className="flex items-center gap-4 text-sm">
+            <Link href={withBasePath('/')} className="text-gray-500 hover:underline">
+              ← Inicio
+            </Link>
             <Link href={withBasePath('/dashboard')} className="text-gray-700 hover:underline">
               Mi cuenta
             </Link>
